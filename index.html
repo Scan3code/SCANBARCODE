@@ -481,7 +481,7 @@ function hideFM(){$('#fm').style.display='none'}
 const IC={ct:'<circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8 16 19 4M16 16 5 4"/>',cp:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',ps:'<rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 5V3h6v2"/>'};
 function showFM(el){const f=$('#fm'),has=!!(CR&&clip&&CR.sh==S.tab),ic=a=>'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+IC[a]+'</svg>';
  const P=SL?PL[SL.r1]||{}:{},mg=P.name?[['um','Tách tên']]:P.abs!==undefined?[['um','Tách dòng']]:[];
- f.innerHTML=[['ct','Cắt'],['cp','Chép']].concat(has?[['ps','Dán']]:[]).concat(mg).concat(SL&&fullRows()?[['mv','Chuyển']]:[]).concat([['more','▾'],['xd','Xóa'],['ins','Chèn']]).concat(has?[['pi','Chèn '+(CR.rows?'hàng':'ô')+' đã '+(CR.cut?'cắt':'sao chép')]]:[]).map(x=>'<button data-a="'+x[0]+'">'+x[1]+'</button>').join('');f.style.display='flex';
+ f.innerHTML=[['ct','Cắt'],['cp','Chép']].concat(has?[['ps','Dán']]:[]).concat(mg).concat([['more','▾'],['xd','Xóa'],['ins','Chèn']]).concat(has?[['pi','Chèn '+(CR.rows?'hàng':'ô')+' đã '+(CR.cut?'cắt':'sao chép')]]:[]).concat(SL&&fullRows()?[['mv','Chuyển']]:[]).map(x=>'<button data-a="'+x[0]+'">'+x[1]+'</button>').join('');f.style.display='flex';
  const w=f.offsetWidth,h=f.offsetHeight;f.style.left=Math.min(Math.max(6,(el?(el.getBoundingClientRect().left+el.getBoundingClientRect().width/2):innerWidth/2)-w/2),innerWidth-w-6)+'px';
  if(el){const r=el.getBoundingClientRect();let top=r.top-h-36;if(top<70)top=r.bottom+36;f.style.top=top+'px';f.style.bottom='auto'}else{f.style.top='auto';f.style.bottom='118px'}
  f.querySelectorAll('button').forEach(b=>b.onclick=()=>{hideFM();act(b.dataset.a)})}
@@ -609,10 +609,36 @@ function kqChips(){if(!KQ)return'';const s=kqStats(KQ.q),c=(v,cls,t)=>'<span cla
  return(KP?'<span class="ch ok btn" data-i="kq:pg">📖 Trang '+(KP.p+1)+'/'+KP.pages+'</span>':'')+'<span class="ch ok btn" data-i="kq:pick">Quầy '+KQN[KQ.q]+' ▾ · '+s.n+' mã</span>'+(KP?'':c('none','c0','Chưa '+s.none)+c('A6','c6','A6 '+s.A6)+c('A4','c4','A4 '+s.A4)+c('A3','c3','A3 '+s.A3))+'<span class="ch er btn" data-i="kq:x">✕ Thoát kiểm</span>'}
 function kqCnt(t){let n=0;for(const k in KM)if(KM[k].indexOf(t)>=0)n++;return n}
 function kqLT(){return KQ.t!='tick'?KQ.t:(KQ.lt||'A6')}
-function kqPage(out){const N=KP.n,bl=[];let cur=null;out.forEach(e=>{if(e.h){if(!cur||cur.d.length){cur={h:[],d:[]};bl.push(cur)}cur.h.push(e)}else{if(!cur){cur={h:[],d:[]};bl.push(cur)}cur.d.push(e)}});
- const pg=[];let pc=null;const flush=()=>{if(pc&&pc.d.length)pg.push(pc);pc=null};
- bl.forEach(b=>{if(b.d.length>N){flush();for(let i=0;i<b.d.length;i+=N)pg.push({rows:b.h.concat(b.d.slice(i,i+N)),d:b.d.slice(i,i+N)})}
-  else{if(pc&&pc.d.length+b.d.length>N)flush();if(!pc)pc={rows:[],d:[]};pc.rows.push(...b.h,...b.d);pc.d.push(...b.d)}});flush();
+function kqLv(h){const t=h.t,n=norm(t),p=h.hf?String(h.hf).split('|'):[],rgb=c=>{const m=/^#?([0-9a-f]{6})$/i.exec(String(c||'').trim());if(!m)return null;const v=parseInt(m[1],16);return[v>>16,v>>8&255,v&255]},fc=rgb(p[3]),bg=rgb(p[4]);
+ if(/^\s*■/.test(t))return 0;
+ if(/vendor\s*:\s*\d+/.test(n)||/^\d{3,}\s*-/.test(n))return 3;
+ if(/^(ap dung|ncc bu|truong hop)/.test(n)||(fc&&((fc[0]>150&&fc[1]<90&&fc[2]<90)||(fc[0]>70&&fc[0]<fc[2]&&fc[1]<90&&fc[2]>110))))return 4;
+ if(/^chuong trinh/.test(n))return 1;
+ if(bg&&bg[0]>200&&bg[1]>200&&bg[2]<110)return 1.5;
+ if(/^nhom\b/.test(n)||(fc&&fc[2]>150&&fc[0]<90&&fc[1]<90))return 2;
+ return-1}
+function kqCx(){if(D.cx)return D.cx;const cx={};let cur=[],run=[];
+ const fin=()=>{const L=run.map(x=>kqLv(x.h)),vi=L.indexOf(3),hp=L.some(v=>v===0||v===1),pi=L.findIndex(v=>v===0||v===1);
+  let u2=0,u4=0;run.forEach((x,k)=>{let l=L[k];
+   if(l===1.5){const nx=L[k+1];l=((nx===undefined||nx>=3)&&cur.some(c=>c.l===2))?2.5:1}
+   else if(l<0)l=(pi>=0&&k<pi)?.5:(vi>=0?k<vi:hp)?2+.1*u2++:4.1+.1*u4++;
+   cur=cur.filter(c=>c.l<l).concat({l,h:x.h,i:x.i})});run=[]};
+ D.rows.forEach((e,i)=>{if(e.h){run.push({h:e,i});return}if(run.length)fin();cx[e.id]={c:cur.map(c=>c.h),k:cur.filter(c=>c.l<4).map(c=>c.i).join(','),s:(cur.find(c=>c.l>=4)||{i:''}).i}});
+ return D.cx=cx}
+function kqPage(out){const z=Z.Sheet3||1,mh=M.clientHeight,N=KP.n||(mh>150?1e9:20),dr=out.filter(e=>!e.h),cx=kqCx(),B=mh>150?(mh-(hdrH()||34))/z-24:1e9,cap=((CWS.Sheet3&&CWS.Sheet3.ten)||620)-14,U=[];let u=null;
+ dr.forEach(e=>{const m=cx[e.id]||{c:[],k:'',s:''};if(!u||u.k!==m.k){u={k:m.k,d:[],subs:[]};U.push(u)}u.d.push(e);const sb=u.subs[u.subs.length-1];if(sb&&sb.s===m.s)sb.d.push(e);else u.subs.push({s:m.s,d:[e]})});
+ const hh=e=>tw(String(e.ten||''),1)>cap?47:33,ch=e=>(cx[e.id]||{c:[]}).c,
+  cost=(rows,pv)=>{let h=0;rows.forEach(e=>{const c=ch(e);let i=0;while(i<c.length&&c[i]===pv[i])i++;h+=(c.length-i)*36+hh(e);pv=c});return h},
+  pgs=[];let cur={d:[],h:0};
+ const fl=()=>{if(cur.d.length)pgs.push(cur.d);cur={d:[],h:0}},pv=()=>cur.d.length?ch(cur.d[cur.d.length-1]):[],
+  put=rows=>{cur.h+=cost(rows,pv());cur.d=cur.d.concat(rows)},
+  fits=(rows,fresh)=>(fresh?0:cur.d.length)+rows.length<=N&&(fresh?0:cur.h)+cost(rows,fresh?[]:pv())<=B,
+  place=(rows,subs,deep)=>{if(fits(rows,0)){put(rows);return}
+   if(cur.d.length&&fits(rows,1)){fl();put(rows);return}
+   if(!deep&&subs.length>1){subs.forEach(s=>place(s.d,[],1));return}
+   rows.forEach(e=>{if(cur.d.length&&(cur.d.length+1>N||cur.h+cost([e],pv())>B))fl();put([e])})};
+ U.forEach(x=>place(x.d,x.subs,0));fl();
+ const pg=pgs.map(d=>{const rows=[];let pv=[];d.forEach(e=>{const c=ch(e);let i=0;while(i<c.length&&c[i]===pv[i])i++;for(let j=i;j<c.length;j++)rows.push(c[j]);rows.push(e);pv=c});return{rows,d}});
  let tot=0;pg.forEach(g=>{g.st=tot;tot+=g.d.length});KP.total=tot;KP.pages=Math.max(1,pg.length);
  if(KP.keep!=null){let j=pg.findIndex(g=>g.st+g.d.length>KP.keep);KP.p=j<0?0:j;KP.keep=null}
  if(KP.p>=KP.pages)KP.p=KP.pages-1;if(KP.p<0)KP.p=0;if(!pg.length){KP.start=0;return out}KP.start=pg[KP.p].st;return pg[KP.p].rows}
@@ -624,11 +650,11 @@ function kqMarkRow(){const b=(t,l)=>'<button data-t="'+t+'" class="mt m'+t+(KQ.t
  if(chk.size)h+='<div class="row3">'+(KQ.t!='tick'?'<button class="pri" id="kt">Đánh dấu '+chk.size+' mã → '+KQ.t+'</button>':'')+'<button id="kn">📝 Ghi chú '+chk.size+' mã</button></div>';
  return h+'<div class="row3"><button id="kd" class="pri" style="font-weight:700">✔ Đã kiểm xong · lật trang để làm bảng</button></div></div>'}
 function kqPgGo(p){if(p<0||p>=KP.pages){msg(p<0?'Đây là trang đầu':'Đã hết trang');return}KP.p=p;list(1)}
-function kqPgStart(){document.body.classList.add('kp');KP={n:+LS.kpn||20,p:0,pages:1,total:0,start:0,keep:null};KQ.v='all';q1=q2=q3='';CF={};chk.clear();bar();list(1);msg('Kiểm xong. Lật từng trang, tick mã cần làm bảng rồi đẩy →A3/A4/A6')}
+function kqPgStart(){document.body.classList.add('kp');KP={n:+LS.kpa||0,p:0,pages:1,total:0,start:0,keep:null};KQ.v='all';q1=q2=q3='';CF={};chk.clear();bar();list(1);msg('Kiểm xong. Lật từng trang, tick mã cần làm bảng rồi đẩy →A3/A4/A6')}
 function kqPgEnd(){KP=null;document.body.classList.remove('kp');bar();list(1)}
 function kqPgOk(){const R=kqPgRows();R.forEach(e=>{KD[String(e.sku).trim()]=1});LS.kd=JSON.stringify(KD);if(KP.p<KP.pages-1){KP.p++;list(1)}else{list();msg('Đã kiểm xong trang cuối')}}
-function kqPgPop(){pop('Lật trang','<div class="mut">Số mã tối đa mỗi trang (trang không bị cắt giữa nhóm vendor):</div><div class="nts">'+[10,15,20,30,40].map(x=>'<button data-sz="'+x+'"'+(x==KP.n?' class="pri"':'')+'>'+x+'</button>').join('')+'</div><input class="f" id="pj" type="number" inputmode="numeric" style="width:100%" placeholder="Nhảy tới trang (1–'+KP.pages+')"><div class="ip-ft" style="margin-top:8px"><button id="pjo" class="pri">Đi</button></div>',p=>{
-  p.querySelectorAll('[data-sz]').forEach(b=>b.onclick=()=>{KP.keep=KP.start||0;KP.n=+b.dataset.sz;LS.kpn=KP.n;p.style.display='none';list(1)});
+function kqPgPop(){pop('Lật trang','<div class="mut">Mặc định mỗi trang tự lấp đầy vừa khít màn hình (không cắt giữa nhóm vendor, đầu trang lặp lại tiêu đề). Hoặc giới hạn số mã tối đa mỗi trang:</div><div class="nts">'+[0,10,15,20,30,40].map(x=>'<button data-sz="'+x+'"'+(x==KP.n?' class="pri"':'')+'>'+(x?x:'Tự vừa màn hình')+'</button>').join('')+'</div><input class="f" id="pj" type="number" inputmode="numeric" style="width:100%" placeholder="Nhảy tới trang (1–'+KP.pages+')"><div class="ip-ft" style="margin-top:8px"><button id="pjo" class="pri">Đi</button></div>',p=>{
+  p.querySelectorAll('[data-sz]').forEach(b=>b.onclick=()=>{KP.keep=KP.start||0;KP.n=+b.dataset.sz;LS.kpa=KP.n;p.style.display='none';list(1)});
   p.querySelector('#pjo').onclick=()=>{const v=+p.querySelector('#pj').value;if(v>=1&&v<=KP.pages){KP.p=v-1;p.style.display='none';list(1)}}})}
 function kqNote(){const ids=[...chk],sk=[...new Set(ids.map(id=>String(D.list[id].sku).trim()))];if(!sk.length)return;
  pop('Ghi chú cho '+sk.length+' mã','<div class="nts">'+['Thiếu bảng','Sai giá','Hỏi lại','Hết hàng','Làm sau'].map(x=>'<button data-n="'+x+'">'+x+'</button>').join('')+'</div><input class="f" id="nti" style="width:100%" placeholder="Hoặc gõ ghi chú" value="'+esc(sk.length==1?KN[sk[0]]||'':'')+'"><div class="ip-ft" style="margin-top:8px"><button id="nd">Xóa ghi chú</button><button id="ns" class="pri">Lưu</button></div>',p=>{
@@ -692,7 +718,7 @@ function colFilter(k){const lab=H3[k][0],get=H3[k][1],cnt=new Map();D.rows.forEa
    p.style.display='none';list(1)}})}
 const p90=a=>{if(!a.length)return 0;const t=[...a].sort((x,y)=>x-y);return t[Math.min(t.length-1,Math.floor(t.length*.9))]};
 let _mc=null;
-function tw(t,bold){if(!_mc)_mc=document.createElement('canvas').getContext('2d');_mc.font=(bold?'700 ':'')+'13px '+(getComputedStyle(document.body).fontFamily||'system-ui,sans-serif');return _mc.measureText(t).width}
+function tw(t,bold){if(!_mc)_mc=document.createElement('canvas').getContext('2d');_mc.font=(bold?'700 ':'')+'13px '+(ffam()||getComputedStyle(document.body).fontFamily||'system-ui,sans-serif');return _mc.measureText(t).width}
 function fitW(h,vals,bold,pad,cap){let m=tw(String(h),1)*0.95+16;const seen=new Set();for(const x of vals){const t=String(x==null?'':x);if(seen.has(t))continue;seen.add(t);const w=tw(t,bold);if(w>m)m=w}return Math.max(40,Math.min(cap||900,Math.ceil(m+pad)))}
 function W3(h,vals,cap,mx){const v=vals.map(x=>String(x==null?'':x)),hw=Math.max(34,Math.min(String(h).length,9)*7+14);
  if(mx)return Math.max(hw,Math.min(cap,Math.round(Math.max(0,...v.map(x=>x.length))*7.2+18)));
@@ -711,9 +737,9 @@ function updCnt(){const c=$('#cnt');if(c)c.textContent='Đã chọn '+chk.size}
 function winCheck(){if(S.tab!='Sheet3'||!$('#tb'))return;const z=Z.Sheet3||1,first=idxAt(M.scrollTop/z);
  if((first<LW.a+6&&LW.a>0)||(first+35>LW.b&&LW.b<LF.length)){const a=Math.max(0,first-20),b=Math.min(LF.length,first+60);LW={a,b};$('#tb').innerHTML=winHtml(a,b)}}
 function list(reset){LF=flt();const F=LF,dr=F.filter(e=>!e.h),all=dr.length&&dr.every(e=>chk.has(e.id));LCS=[...C3].sort((a,b)=>b.f-a.f);
- const cols=[{w:(KQ&&!KP)?0:34,fz:1},{w:42,fz:1}].concat(LCS.map(c=>({w:(CWS.Sheet3&&CWS.Sheet3[c.k])||fitW(H3[c.k][0]+' ▾ ',dr.map(H3[c.k][1]),c.k=='sku',(c.k=='sku'&&KQ?118:16),c.k=='ten'?620:520),fz:c.f})));LL=lay(cols);
+ const cols=[{w:(KQ&&!KP)?0:34,fz:1},{w:42,fz:1}].concat(LCS.map(c=>({w:(CWS.Sheet3&&CWS.Sheet3[c.k])||fitW(H3[c.k][0]+' ▾ ',dr.map(H3[c.k][1]),c.k=='sku'||c.k=='ten',(c.k=='sku'&&KQ?118:16),c.k=='ten'?620:520),fz:c.f})));LL=lay(cols);
  let t=KP?KP.start||0:0;LN=F.map(e=>e.h?0:++t);
- LH=F.map(e=>e.h?34:Math.max(30,Math.max(...LCS.map((c,x)=>c.k=='ten'?Math.min(2,Math.max(1,Math.ceil(tw(String(H3[c.k][1](e)||''))/Math.max(24,cols[x+2].w-14)))):1))*16+12));
+ LH=F.map(e=>e.h?34:Math.max(30,Math.max(...LCS.map((c,x)=>c.k=='ten'?Math.min(2,Math.max(1,Math.ceil(tw(String(H3[c.k][1](e)||''),1)/Math.max(24,cols[x+2].w-14)))):1))*16+12));
  LP=[0];LH.forEach(h=>LP.push(LP[LP.length-1]+h));
  const sx=M.scrollLeft,sy=reset?0:M.scrollTop,z=Z.Sheet3||1,first=Math.min(F.length,idxAt(sy/z)),a=Math.max(0,first-20),b=Math.min(F.length,first+60);LW={a,b};
  M.className='';M.style.fontFamily=ffam();M.innerHTML=head(cols,LL,['<input type="checkbox" id="ta"'+(all?' checked':'')+'>','STT'].concat(LCS.map(c=>H3[c.k][0]+'<u class="fi'+(CF[c.k]?' on':'')+'" data-f="'+c.k+'">▾</u>')),['',''].concat(LCS.map(c=>fcss(D.hdrFm&&D.hdrFm[colIdx(c.k)],null,0,{min:1}))),['',''].concat(LCS.map(c=>c.k))).replace(/<\/tr>$/,'</tr><tbody id="tb">')+winHtml(a,b)+'</tbody></table>';
@@ -812,6 +838,12 @@ if(!chk.size)return msg('Chưa tick mã nào ở Sheet3');snap(true);const R=S[s
 /* ---------- A3 / A4 / A6 ---------- */
 let CWS=(()=>{try{return JSON.parse(LS.cws||'{}')}catch(e){return{}}})();
 const GSRC={sku:1,nh:8,ten:2,dvt:3,gia:5,goc:4,qt:6,ad:7};
+let S3WC=null;
+function s3w(m){if(!H3[m]||!D.list.length)return 0;if(CWS.Sheet3&&CWS.Sheet3[m])return CWS.Sheet3[m];const c=S3WC||(S3WC={n:-1,w:{}});if(c.n!==D.list.length){c.n=D.list.length;c.w={}}return c.w[m]||(c.w[m]=fitW(H3[m][0]+' ▾ ',D.list.map(H3[m][1]),m=='sku'||m=='ten',16,m=='ten'?620:520))}
+function colW(k,x,vals,empty){const key=k[0],s=empty?s3w(key):0;
+ if(key=='ten')return Math.round(s?Math.min(s,440):Math.max(220,fitW(k[1],vals.filter(Boolean).slice(0,400),true,16,440)));
+ if(empty&&key=='g')return k[2];
+ return(s||W3(k[1],vals,k[2],k[3]))+(x==0?24:0)}
 function grid(){const sh=S.tab,R=S[sh];{let l=-1;R.forEach((r,i)=>{if(r.sku)l=i});while(R.length<Math.max(60,l+30))R.push(blank())}VV=mkVal(sh);const G=GL;
  if(SL&&SL.r1>=R.length)SL=null;else if(SL)SL.r2=Math.min(SL.r2,R.length-1);
  const K=[['sku','SKU',110,1],['nh','Nhãn',220,1],['ten','Tên hàng',280,0],['dvt','Quy cách',90,1],['gia','Giá bán',100,1],['goc','Giá gốc',100,1],['qt','Quà tặng',300,1],['ad','Áp dụng',300,1],['g','Ghi chú / ghép',160,1]];
@@ -822,8 +854,8 @@ function grid(){const sh=S.tab,R=S[sh];{let l=-1;R.forEach((r,i)=>{if(r.sku)l=i}
    if(P.name){
     if(key=='sku')return esc(r.sku)+'<span class="mb">+'+ms.length+'</span>';
     if(key=='ten')return'<div class="mn">'+esc(txt)+' <span class="gc">ghép '+(ms.length+1)+' mã</span></div>'+[i].concat(ms).map(j=>'<div class="mo"><b>'+esc(R[j].sku)+'</b> '+esc(R[j].e&&R[j].e.ten?String(R[j].e.ten):'')+'</div>').join('')}
-   return(key=='ten'&&r.err&&r.sku?'<button type="button" class="twb" data-w="'+esc(r.sku)+'" data-r="'+i+'">🌐 Tra web</button> ':'')+(k[3]?esc(txt):cdiv(txt))};
-  const cols=[{w:40,fz:1}].concat(K.map((k,x)=>({w:(CWS[sh]&&CWS[sh][k[0]])||(W3(k[1],R.map((r,i)=>tx(r,i,k[0])),k[2],k[3])+(x==0?24:0)),fz:x==0}))),L=lay(cols);
+   return(key=='ten'&&r.err&&r.sku?'<button type="button" class="twb" data-w="'+esc(r.sku)+'" data-r="'+i+'">🌐 Tra web</button> ':'')+(k[3]||key=='ten'?esc(txt):cdiv(txt))};
+  const cols=[{w:40,fz:1}].concat(K.map((k,x)=>({w:(CWS[sh]&&CWS[sh][k[0]])||colW(k,x,R.map((r,i)=>tx(r,i,k[0])),!R.some(r=>r.sku)),fz:x==0}))),L=lay(cols);
  const sx=M.scrollLeft,sy=M.scrollTop;M.className='g';M.style.fontFamily='';
  M.innerHTML=head(cols,L,['#'].concat(K.map(k=>k[1])),null,[''].concat(K.map(k=>k[0])))+R.map((r,i)=>{const g=G[i]||{};
   return'<tr class="'+(r.sku?'df ':'')+(g.gs?'dt ':'')+(r.err?'e ':'')+(r.warn?'w ':'')+(PL[i]&&PL[i].name?'mgc ':'')+(g.ab?'ab ':'')+(g.big?'gw'+(g.gs?' gt':'')+(g.ge?' gb':''):'')+'"'+(g.ab&&!SHOWAB?' style="display:none"':'')+'><td'+st(L[0],'n')+' data-r="'+i+'">'+(i+1)+'</td>'+
@@ -896,10 +928,10 @@ function draw(){save();hideFM();bar();tabsDraw();
 const dist=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);let pz=null;
 M.addEventListener('touchstart',e=>{if(e.touches.length==2)pz={d:dist(e),z:Z[S.tab]||1}},{passive:true});
 M.addEventListener('touchmove',e=>{if(pz&&e.touches.length==2){e.preventDefault();Z[S.tab]=Math.min(2.5,Math.max(.5,pz.z*dist(e)/pz.d));zoomApply()}},{passive:false});
-M.addEventListener('touchend',e=>{if(pz&&e.touches.length<2){pz=null;LS.z=JSON.stringify(Z)}});
+M.addEventListener('touchend',e=>{if(pz&&e.touches.length<2){pz=null;LS.z=JSON.stringify(Z);if(KP&&S.tab=='Sheet3'){KP.keep=KP.start||0;list(1)}}});
 document.addEventListener('gesturestart',e=>e.preventDefault());
 draw();load();
-if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){const V='20261114a';let fresh=true;try{fresh=LS.appv===V;if(!fresh){LS.appv=V;fresh=LS.appv!==V}}catch(e){}
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){const V='20261118d';let fresh=true;try{fresh=LS.appv===V;if(!fresh){LS.appv=V;fresh=LS.appv!==V}}catch(e){}
  if(!fresh)navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>window.caches?caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))):0).catch(()=>{}).then(()=>location.reload());
  else navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{})}
 </script></body></html>
