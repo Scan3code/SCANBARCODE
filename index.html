@@ -9,7 +9,7 @@
 @media(prefers-color-scheme:dark){:root:not([data-theme]){--mgf:#1c4a35;--cx:#4a3112;--mut:#97a39d;--acs:#1c3a31;--hz:#1f4a52;--bg:#161a18;--fg:#e6ebe8;--bd:#46564e;--hd:#232b28;--ac:#4fb597;--sel:#244a3f;--er:#5a2623;--wn:#5a4a14}}
 :root[data-theme=dark]{--mgf:#1c4a35;--cx:#4a3112;--mut:#97a39d;--acs:#1c3a31;--hz:#1f4a52;--bg:#161a18;--fg:#e6ebe8;--bd:#46564e;--hd:#232b28;--ac:#4fb597;--sel:#244a3f;--er:#5a2623;--wn:#5a4a14}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;overscroll-behavior:none;touch-action:manipulation}
+html{background:var(--hd)}html,body{height:100%;margin:0;overscroll-behavior:none;touch-action:manipulation}
 body{height:100dvh;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;padding-top:env(safe-area-inset-top)}
 #bar{display:flex;flex-wrap:wrap;gap:6px;padding:5px 6px;border-bottom:1px solid var(--bd);align-items:center}
 .sp{flex:1}.row2{display:flex;gap:6px;align-items:center;width:100%;overflow-x:auto}
@@ -607,7 +607,7 @@ $('#ei').onkeydown=e=>{if(e.key!='Enter')return;e.preventDefault();const E=ED;if
 $('#ei').onpaste=e=>{const t=(e.clipboardData||window.clipboardData).getData('text');if(ED&&/\n/.test(t.trim())){e.preventDefault();const{r,c}=ED;closeEdit();SL={r1:r,c1:c,r2:r,c2:c};pasteTxt(t,false)}};
 /* ---------- Sheet3 ---------- */
 /* ---------- KIỂM BẢNG KM THEO QUẦY (lọc theo tên, quy tắc lấy từ LocQuay.gs) ---------- */
-let KQ=null,KP=null,KD={},KN={},KMH=[],KM={};try{KN=JSON.parse(LS.kn||'{}')||{}}catch(e){KN={}}try{KD=JSON.parse(LS.kd||'{}')||{}}catch(e){KD={}}try{KM=JSON.parse(LS.km||'{}')||{}}catch(e){KM={}}const QC=new Map();
+let KPL=null,KQ=null,KP=null,KD={},KN={},KMH=[],KM={};try{KN=JSON.parse(LS.kn||'{}')||{}}catch(e){KN={}}try{KD=JSON.parse(LS.kd||'{}')||{}}catch(e){KD={}}try{KM=JSON.parse(LS.km||'{}')||{}}catch(e){KM={}}const QC=new Map();
 const KQN={NAM:'NAM',NU:'NỮ',TRE_EM:'TRẺ EM',TONG_HOP:'TỔNG HỢP',ALL:'TẤT CẢ'},QS={NAM:'Nam',NU:'Nữ',TRE_EM:'TE',TONG_HOP:'TH',NAM_NU:'Nam+Nữ'};
 const KQ_UNISEX=/aothun/; // hàng không ghi nam / nữ nhưng có ở cả 2 quầy; thêm loại khác ví dụ: /aothun|aopolo|quanshort/
 const qStrip=s=>String(s||'').toLowerCase().replace(/đ/g,'d').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
@@ -664,6 +664,7 @@ function kqPage(out){const z=Z.Sheet3||1,mh=M.clientHeight+($('#tray')?$('#tray'
  let pg=pgs.map(d=>{const rows=[];let pv=[];d.forEach(e=>{const c=ch(e);let i=0;while(i<c.length&&c[i]===pv[i])i++;for(let j=i;j<c.length;j++)rows.push(c[j]);rows.push(e);pv=c});return{rows,d}});
  {const ck=[N,z,M.clientWidth,dr.length,dr.length?dr[0].id:'',dr.length?dr[dr.length-1].id:'',dr.length?dr[dr.length>>1].id:'',D.rows.length].join('|');if(KP.ck===ck&&KP.cp)pg=KP.cp;else{KP.ck=ck;KP.cp=pg}}
  let tot=0;pg.forEach(g=>{g.st=tot;tot+=g.d.length});KP.total=tot;KP.pages=Math.max(1,pg.length);
+ if(KP.keepSku){const j=pg.findIndex(g=>g.d.some(e=>String(e.sku).trim()==KP.keepSku));if(j>=0)KP.p=j;KP.keepSku=null;KP.keep=null;KP.go=1}
  if(KP.keep==null&&!KP.go&&KP.start!=null&&KP.had)KP.keep=KP.start;KP.go=0;
  if(KP.keep!=null){let j=pg.findIndex(g=>g.st+g.d.length>KP.keep);KP.p=j<0?0:j;KP.keep=null}
  if(KP.p>=KP.pages)KP.p=KP.pages-1;if(KP.p<0)KP.p=0;if(!pg.length){KP.start=0;return out}KP.start=pg[KP.p].st;KP.had=1;return pg[KP.p].rows}
@@ -675,8 +676,9 @@ function kqMarkRow(){const b=(t,l)=>'<button data-t="'+t+'" class="mt m'+t+(KQ.t
  if(chk.size)h+='<div class="row3">'+(KQ.t!='tick'?'<button class="pri" id="kt">Đánh dấu '+chk.size+' mã → '+KQ.t+'</button>':'')+'<button id="kn">📝 Ghi chú '+chk.size+' mã</button></div>';
  return h+'<div class="row3"><button id="kd" class="pri" style="font-weight:700">✔ Đã kiểm xong · lật trang để làm bảng</button></div></div>'}
 function kqPgGo(p){if(p<0||p>=KP.pages){msg(p<0?'Đây là trang đầu':'Đã hết trang');return}KP.p=p;KP.go=1;list(1)}
-function kqPgStart(){document.body.classList.add('kp');KP={n:+LS.kpa||0,p:0,pages:1,total:0,start:0,keep:null,go:0,had:0};KQ.v='all';q1=q2=q3='';CF={};chk.clear();bar();list(1);msg('Kiểm xong. Lật từng trang, tick mã cần làm bảng rồi đẩy →A3/A4/A6')}
-function kqPgEnd(){KP=null;document.body.classList.remove('kp');bar();list(1)}
+function kqPgStart(){document.body.classList.add('kp');KP={n:+LS.kpa||0,p:0,pages:1,total:0,start:0,keep:null,go:0,had:0,keepSku:KPL};KQ.v='all';q1=q2=q3='';CF={};chk.clear();bar();list(1);msg('Kiểm xong. Lật từng trang, tick mã cần làm bảng rồi đẩy →A3/A4/A6')}
+function kqScrollTo(sku){if(!sku)return;const z=Z.Sheet3||1;let i=LF.findIndex(e=>!e.h&&String(e.sku).trim()==sku);if(i<0)return;while(i>0&&LF[i-1].h)i--;const go=()=>{M.scrollTop=LP[i]*z};go();requestAnimationFrame(go);setTimeout(go,80)}
+function kqPgEnd(){const f=kqPgRows()[0];if(f)KPL=String(f.sku).trim();KP=null;document.body.classList.remove('kp');bar();list(1);kqScrollTo(KPL)}
 function kqPgOk(){const R=kqPgRows();R.forEach(e=>{KD[String(e.sku).trim()]=1});LS.kd=JSON.stringify(KD);if(KP.p<KP.pages-1){KP.p++;KP.go=1;list(1)}else{list();msg('Đã kiểm xong trang cuối')}}
 function kqPgPop(){pop('Lật trang','<div class="mut">Mặc định mỗi trang tự lấp đầy vừa khít màn hình (không cắt giữa nhóm vendor, đầu trang lặp lại tiêu đề). Hoặc giới hạn số mã tối đa mỗi trang:</div><div class="nts">'+[0,10,15,20,30,40].map(x=>'<button data-sz="'+x+'"'+(x==KP.n?' class="pri"':'')+'>'+(x?x:'Tự vừa màn hình')+'</button>').join('')+'</div><input class="f" id="pj" type="number" inputmode="numeric" style="width:100%" placeholder="Nhảy tới trang (1–'+KP.pages+')"><div class="ip-ft" style="margin-top:8px"><button id="pjo" class="pri">Đi</button></div>',p=>{
   p.querySelectorAll('[data-sz]').forEach(b=>b.onclick=()=>{KP.keep=KP.start||0;KP.n=+b.dataset.sz;LS.kpa=KP.n;p.style.display='none';list(1)});
@@ -717,8 +719,8 @@ function kqMark(t){if(!chk.size)return;const sk=[...new Set([...chk].map(id=>Str
 function kqAct(k){if(k=='kq:pg')return kqPgPop();if(k=='kq:pick')return kqPop();if(k=='kq:x')return kqStop();if(k.indexOf('kq:v:')==0){const v=k.slice(5);KQ.v=KQ.v==v?'all':v;chk.clear();bar();list(1)}}
 function kqPop(){const its=Object.keys(KQN).map(k=>{const s=kqStats(k);return['<b>'+KQN[k]+(KQ&&KQ.q==k?' ✓':'')+'</b><br><small>'+s.n+' mã · đã đánh dấu '+(s.n-s.none)+' · chưa đánh dấu '+s.none+'</small>',()=>kqStart(k)]});
  if(KQ)its.push(['✕ Thoát chế độ kiểm bảng',kqStop]);popItems('Kiểm bảng KM · chọn quầy cần kiểm',its)}
-function kqStart(k){KP=null;document.body.classList.remove('kp');document.body.classList.add('kq');KQ={q:k,v:KQ?KQ.v:'all',t:KQ?KQ.t:(LS.kqt||'A6')};if(KQ.t=='tick'&&!(LS.kqt&&LS.kqt!='tick'))KQ.lt='A6';else KQ.lt=KQ.t=='tick'?LS.kqt:KQ.t;CF={};q1=q2=q3='';chk.clear();bar();list(1);msg('Quầy '+KQN[k]+': chạm dòng hoặc gõ mã ở ô SKU để đánh dấu '+KQ.t)}
-function kqStop(){KQ=null;KP=null;document.body.classList.remove('kq','kp');bar();list(1)}
+function kqStart(k){if(!KQ||KQ.q!=k)KPL=null;KP=null;document.body.classList.remove('kp');document.body.classList.add('kq');KQ={q:k,v:KQ?KQ.v:'all',t:KQ?KQ.t:(LS.kqt||'A6')};if(KQ.t=='tick'&&!(LS.kqt&&LS.kqt!='tick'))KQ.lt='A6';else KQ.lt=KQ.t=='tick'?LS.kqt:KQ.t;CF={};q1=q2=q3='';chk.clear();bar();list(1);msg('Quầy '+KQN[k]+': chạm dòng hoặc gõ mã ở ô SKU để đánh dấu '+KQ.t)}
+function kqStop(){KPL=null;KQ=null;KP=null;document.body.classList.remove('kq','kp');bar();list(1)}
 function flt(){const a=norm(q1).split(/\s+/).filter(Boolean),b=norm(q2).split(/\s+/).filter(Boolean),c=norm(q3).trim(),ks=Object.keys(CF);if(!a.length&&!b.length&&!c&&!ks.length&&!KQ)return D.rows;
  const ok=e=>{if(KQ&&!kqOk(e))return false;const x=norm(e.ten+' '+e.sku),y=norm(e.v+' '+e.nh);
   if(!(a.every(w=>x.includes(w))&&b.every(w=>y.includes(w))&&(!c||norm(e.ten).startsWith(c)||String(e.sku).startsWith(c))))return false;
@@ -889,7 +891,8 @@ function grid(){const sh=S.tab,R=S[sh];{let l=-1;R.forEach((r,i)=>{if(r.sku)l=i}
  M.scrollLeft=sx;M.scrollTop=sy;zoomApply();infoDraw();
  if(FL&&FL.sh==sh){const f=FL;FL=null;M.querySelectorAll('td[data-r]').forEach(td=>{const r=+td.dataset.r;if(r>=f.r1&&r<=f.r2)td.classList.add('fl')});
   if(!f.noSel){XS=[];SL={r1:f.r1,r2:f.r2,c1:0,c2:8}}
-  setTimeout(()=>{const t=M.querySelector('td[data-r="'+f.r1+'"][data-c="0"]');if(t){const m=M.getBoundingClientRect(),r=t.getBoundingClientRect(),hh=hdrH();if(f.top)M.scrollTop+=r.top-(m.top+hh+6);else if(r.top<m.top+hh+2)M.scrollTop-=m.top+hh+2-r.top;else if(r.bottom>m.bottom-6)M.scrollTop+=r.bottom-m.bottom+6}paint()},40);
+  const jump=()=>{const t=M.querySelector('td[data-r="'+f.r1+'"][data-c="0"]');if(t){const m=M.getBoundingClientRect(),r=t.getBoundingClientRect(),hh=hdrH();if(f.top)M.scrollTop+=r.top-(m.top+hh+6)-(r.height>0?Math.min(r.height,40):0);else if(r.top<m.top+hh+2)M.scrollTop-=m.top+hh+2-r.top;else if(r.bottom>m.bottom-6)M.scrollTop+=r.bottom-m.bottom+6}paint()};
+  setTimeout(jump,40);if(f.top){setTimeout(jump,160);setTimeout(jump,420)}
   setTimeout(()=>M.querySelectorAll('td.fl').forEach(x=>x.classList.remove('fl')),2400)}}
 let SHOWAB=LS.showab=='1',RZ=null,RZT=0,RZK='';
 function rzRender(){if(RZ)return;RZ=requestAnimationFrame(()=>{RZ=null;S.tab=='Sheet3'?list():grid()})}
@@ -919,7 +922,7 @@ function zoomApply(){const t=$('#main table');if(t)t.style.zoom=Z[S.tab]||1}
 let UNP=(()=>{try{return JSON.parse(LS.unp||'{}')}catch(e){return{}}})();
 const TC={Sheet3:'#3b6ea8',A3:'#1d8a63',A4:'#d9780b',A6:'#8b5cc4'};
 function tabsDraw(){const t=$('#tabs');t.innerHTML=['Sheet3','A3','A4','A6'].map(x=>{const u=UN[x]||0;return'<button class="'+(x==S.tab?'on':u?'nw':'')+'" data-t="'+x+'" style="--tc:'+TC[x]+';--tcs:'+TC[x]+'22">'+x+(u&&x!=S.tab?'<i>+'+u+'</i>':'')+'</button>'}).join('');
- t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(ED)closeEdit();S.tab=b.dataset.t;SL=null;delete UN[S.tab];LS.un=JSON.stringify(UN);const u=UNP[S.tab];delete UNP[S.tab];LS.unp=JSON.stringify(UNP);FL=u&&S.tab!='Sheet3'?{sh:S.tab,r1:u.a,r2:u.b,noSel:true,top:true}:null;draw();M.scrollTo(0,0)})}
+ t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(ED)closeEdit();S.tab=b.dataset.t;SL=null;delete UN[S.tab];LS.un=JSON.stringify(UN);const u=UNP[S.tab];delete UNP[S.tab];LS.unp=JSON.stringify(UNP);FL=u&&S.tab!='Sheet3'?{sh:S.tab,r1:u.a,r2:u.b,noSel:true,top:true}:null;draw();if(!FL)M.scrollTo(0,0)})}
 function rawOf(i,k){const r=S[S.tab][i],f=FK[k];if(f=='sku')return r.sku||'';if(f=='g')return r.g!==undefined?String(r.g):'';if(f=='ten')return r.e&&r.e.ten?String(r.e.ten):'';const v=VV[i]&&VV[i][f];return v==null?'':String(v)}
 function replaceText(t,q,rep){const nq=norm(q).trim();if(!nq)return{s:t,n:0};let nn='',map=[];for(let i=0;i<t.length;i++){const c=norm(t[i]);for(let j=0;j<c.length;j++){nn+=c[j];map.push(i)}}
  let out='',last=0,n=0,p=0;while((p=nn.indexOf(nq,p))>=0){const a=map[p],b=map[p+nq.length-1]+1;out+=t.slice(last,a)+rep;last=b;n++;p+=nq.length}return{s:out+t.slice(last),n}}
