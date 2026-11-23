@@ -112,6 +112,7 @@ tr.r3.k6 td:nth-child(2){box-shadow:inset 5px 0 0 #7b5ea7}tr.r3.k4 td:nth-child(
 <script>
 const API='https://script.google.com/macros/s/AKfycbzMixo2qTm43242LjvrH6E_ypONCjbRL-qUdmNKznr3CJut25HXcQSvMhFce4T3NSYe/exec';
 const $=s=>document.querySelector(s),LS=localStorage;
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').toLowerCase();
 const isN=x=>typeof x=='number'||(x!=null&&x!==''&&/^[\d.,\s]+$/.test(String(x))&&/\d/.test(String(x)));
 const fm=v=>typeof v=='number'?Math.round(v).toLocaleString('vi-VN'):(v==null?'':v),esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
@@ -423,17 +424,19 @@ $('#ei').addEventListener('input',sugg);
 const DBo=()=>new Promise((ok,no)=>{try{const q=indexedDB.open('bg',1);q.onupgradeneeded=()=>q.result.createObjectStore('ses',{keyPath:'id'});q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)}catch(e){no(e)}});
 const dbq=(m,f)=>DBo().then(d=>new Promise((ok,no)=>{const t=d.transaction('ses',m),r=f(t.objectStore('ses'));t.oncomplete=()=>ok(r.result);t.onerror=()=>no(t.error)}));
 async function localPop(){let L=[];try{L=(await dbq('readonly',x=>x.getAll()))||[]}catch(e){return msg('Máy này không cho lưu phiên: '+e)}
- L.sort((a,b)=>b.t-a.t);const cur=JSON.parse(LS.lcur||'null'),its=[['＋ Tạo phiên mới <small>(A3, A4, A6 để trống)</small>',newLocal],['💾 Lưu bảng hiện tại thành phiên mới',()=>{const n=prompt('Đặt tên phiên:','Phiên '+new Date().toLocaleDateString('vi-VN'));if(n&&n.trim())saveLocal(null,n.trim())}]];
+ L.sort((a,b)=>b.t-a.t);const cur=JSON.parse(LS.lcur||'null'),its=[['＋ Tạo phiên mới <small>(A3, A4, A6 để trống, dấu kiểm giữ nguyên)</small>',newLocal],['💾 Lưu bảng hiện tại thành phiên mới',()=>{const n=prompt('Đặt tên phiên:','Phiên '+new Date().toLocaleDateString('vi-VN'));if(n&&n.trim())saveLocal(null,n.trim())}]];
  if(cur&&L.some(x=>x.id==cur.id))its.push(['↻ Cập nhật phiên đang mở: <b>'+esc(cur.name)+'</b>',()=>saveLocal(cur.id,cur.name)]);
  L.forEach(x=>its.push(['<b>'+esc(x.name)+'</b><br><small>'+esc(x.when)+' · '+x.n+' mã</small>',()=>localItem(x)]));
+ its.push(['🗑 Xóa toàn bộ dấu kiểm <small>('+Object.keys(KM).length+' mã có dấu A3/A4/A6, '+Object.keys(KN).length+' ghi chú)</small>',()=>{if(!confirm('Xóa toàn bộ dấu kiểm, ghi chú và trạng thái đã kiểm? Làm lại kiểm bảng từ đầu.'))return;KM={};KMH=[];LS.km='{}';KN={};LS.kn='{}';KD={};LS.kd='{}';list();msg('Đã xóa toàn bộ dấu kiểm')}]);
  its.push(['☁ Phiên online (Google Sheet, lâu lâu mới dùng)',sessPop]);popItems('Phiên làm việc trên máy này',its)}
 async function newLocal(){const n=prompt('Đặt tên phiên mới (A3, A4, A6 sẽ để trống):','Phiên '+new Date().toLocaleDateString('vi-VN'));if(!n||!n.trim())return;const nm=n.trim(),cnt=snapSKU().length;
  const go=async keep=>{if(keep){const c=JSON.parse(LS.lcur||'null');try{const ex=c&&(await dbq('readonly',x=>x.get(c.id)));ex?await saveLocal(c.id,c.name):await saveLocal(null,'Phiên tự lưu '+new Date().toLocaleString('vi-VN'))}catch(e){return msg('Không lưu được phiên hiện tại: '+e)}}
-  snap();['A3','A4','A6'].forEach(k=>S[k]=Array.from({length:20},blank));SL=null;CR=null;chk.clear();UN={};UNP={};LS.un='{}';LS.unp='{}';KM={};KMH=[];LS.km='{}';KN={};LS.kn='{}';KD={};LS.kd='{}';delete LS.cur;await saveLocal(null,nm);save();draw();msg('Đã tạo phiên mới "'+nm+'"')};
+  snap();['A3','A4','A6'].forEach(k=>S[k]=Array.from({length:20},blank));SL=null;CR=null;chk.clear();UN={};UNP={};LS.un='{}';LS.unp='{}';delete LS.cur;await saveLocal(null,nm);save();draw();msg('Đã tạo phiên mới "'+nm+'" (dấu kiểm vẫn giữ nguyên)')};
  if(!cnt)return go(false);
  popItems('Bảng hiện tại đang có '+cnt+' mã',[['Lưu phiên hiện tại rồi tạo phiên mới',()=>go(true)],['Tạo phiên mới, bỏ bảng hiện tại (hoàn tác được)',()=>go(false)]])}
 async function saveLocal(id,name){id=id||Date.now().toString(36);try{await dbq('readwrite',x=>x.put({id,name,when:new Date().toLocaleString('vi-VN'),t:Date.now(),n:snapSKU().length,data:JSON.stringify({A3:S.A3,A4:S.A4,A6:S.A6,km:KM,kn:KN,kd:KD},rp)}));LS.lcur=JSON.stringify({id,name});msg('Đã lưu phiên "'+name+'" trên máy');draw()}catch(e){msg('Không lưu được phiên: '+e)}}
-function localItem(x){popItems(esc(x.name),[['Mở phiên này (thay bảng hiện tại, hoàn tác được)',()=>{const d=JSON.parse(x.data);snap();['A3','A4','A6'].forEach(k=>S[k]=d[k]||[]);KM=d.km||{};KMH=[];LS.km=JSON.stringify(KM);KN=d.kn||{};LS.kn=JSON.stringify(KN);KD=d.kd||{};LS.kd=JSON.stringify(KD);SL=null;LS.lcur=JSON.stringify({id:x.id,name:x.name});save();draw();msg('Đã mở phiên "'+x.name+'"')}],
+function localItem(x){popItems(esc(x.name),[['Mở phiên này (thay bảng hiện tại, hoàn tác được)',()=>{const d=JSON.parse(x.data);snap();['A3','A4','A6'].forEach(k=>S[k]=d[k]||[]);SL=null;LS.lcur=JSON.stringify({id:x.id,name:x.name});save();draw();msg('Đã mở phiên "'+x.name+'" (dấu kiểm hiện tại giữ nguyên)')}],
+ ...((()=>{try{const k=JSON.parse(x.data).km;return k&&Object.keys(k).length}catch(e){return 0}})()?[['Khôi phục cả dấu kiểm của phiên này (thay dấu kiểm hiện tại)',()=>{if(!confirm('Thay toàn bộ dấu kiểm hiện tại bằng dấu kiểm đã lưu trong phiên này?'))return;const d=JSON.parse(x.data);KM=d.km||{};KMH=[];LS.km=JSON.stringify(KM);KN=d.kn||{};LS.kn=JSON.stringify(KN);KD=d.kd||{};LS.kd=JSON.stringify(KD);list();msg('Đã khôi phục dấu kiểm của phiên "'+x.name+'"')}]]:[]),
  ['Đổi tên',async()=>{const n=prompt('Tên mới:',x.name);if(n&&n.trim()){x.name=n.trim();await dbq('readwrite',z=>z.put(x));if((JSON.parse(LS.lcur||'{}')).id==x.id)LS.lcur=JSON.stringify({id:x.id,name:x.name});msg('Đã đổi tên');draw()}}],
  ['Xóa phiên này',async()=>{if(!confirm('Xóa phiên "'+x.name+'" khỏi máy?'))return;await dbq('readwrite',z=>z.delete(x.id));if((JSON.parse(LS.lcur||'{}')).id==x.id)delete LS.lcur;msg('Đã xóa phiên');draw()}]])}
 /* ---------- phiên làm việc (lưu online) ---------- */
@@ -659,8 +662,9 @@ function kqPage(out){const z=Z.Sheet3||1,mh=M.clientHeight,N=KP.n||(mh>150?1e9:2
  U.forEach(x=>place(x.d,x.subs,0));fl();
  const pg=pgs.map(d=>{const rows=[];let pv=[];d.forEach(e=>{const c=ch(e);let i=0;while(i<c.length&&c[i]===pv[i])i++;for(let j=i;j<c.length;j++)rows.push(c[j]);rows.push(e);pv=c});return{rows,d}});
  let tot=0;pg.forEach(g=>{g.st=tot;tot+=g.d.length});KP.total=tot;KP.pages=Math.max(1,pg.length);
+ if(KP.keep==null&&!KP.go&&KP.start!=null&&KP.had)KP.keep=KP.start;KP.go=0;
  if(KP.keep!=null){let j=pg.findIndex(g=>g.st+g.d.length>KP.keep);KP.p=j<0?0:j;KP.keep=null}
- if(KP.p>=KP.pages)KP.p=KP.pages-1;if(KP.p<0)KP.p=0;if(!pg.length){KP.start=0;return out}KP.start=pg[KP.p].st;return pg[KP.p].rows}
+ if(KP.p>=KP.pages)KP.p=KP.pages-1;if(KP.p<0)KP.p=0;if(!pg.length){KP.start=0;return out}KP.start=pg[KP.p].st;KP.had=1;return pg[KP.p].rows}
 function kqPgRows(){return LF.filter(e=>!e.h)}
 function kqMarkRow(){const b=(t,l)=>'<button data-t="'+t+'" class="mt m'+t+(KQ.t==t?' on':'')+'">'+l+'</button>';
  if(KP){const R=kqPgRows(),a0=(KP.start||0)+1;
@@ -668,13 +672,13 @@ function kqMarkRow(){const b=(t,l)=>'<button data-t="'+t+'" class="mt m'+t+(KQ.t
  let h='<div id="kqw" style="width:100%;display:flex;flex-direction:column;gap:5px"><div class="row3" id="row3">'+b('A6','A6 <small>'+kqCnt('A6')+'</small>')+b('A4','A4 <small>'+kqCnt('A4')+'</small>')+b('A3','A3 <small>'+kqCnt('A3')+'</small>')+b('tick','Tick')+'<button id="kz" aria-label="Hoàn tác dấu">↶</button></div>';
  if(chk.size)h+='<div class="row3">'+(KQ.t!='tick'?'<button class="pri" id="kt">Đánh dấu '+chk.size+' mã → '+KQ.t+'</button>':'')+'<button id="kn">📝 Ghi chú '+chk.size+' mã</button></div>';
  return h+'<div class="row3"><button id="kd" class="pri" style="font-weight:700">✔ Đã kiểm xong · lật trang để làm bảng</button></div></div>'}
-function kqPgGo(p){if(p<0||p>=KP.pages){msg(p<0?'Đây là trang đầu':'Đã hết trang');return}KP.p=p;list(1)}
-function kqPgStart(){document.body.classList.add('kp');KP={n:+LS.kpa||0,p:0,pages:1,total:0,start:0,keep:null};KQ.v='all';q1=q2=q3='';CF={};chk.clear();bar();list(1);msg('Kiểm xong. Lật từng trang, tick mã cần làm bảng rồi đẩy →A3/A4/A6')}
+function kqPgGo(p){if(p<0||p>=KP.pages){msg(p<0?'Đây là trang đầu':'Đã hết trang');return}KP.p=p;KP.go=1;list(1)}
+function kqPgStart(){document.body.classList.add('kp');KP={n:+LS.kpa||0,p:0,pages:1,total:0,start:0,keep:null,go:0,had:0};KQ.v='all';q1=q2=q3='';CF={};chk.clear();bar();list(1);msg('Kiểm xong. Lật từng trang, tick mã cần làm bảng rồi đẩy →A3/A4/A6')}
 function kqPgEnd(){KP=null;document.body.classList.remove('kp');bar();list(1)}
-function kqPgOk(){const R=kqPgRows();R.forEach(e=>{KD[String(e.sku).trim()]=1});LS.kd=JSON.stringify(KD);if(KP.p<KP.pages-1){KP.p++;list(1)}else{list();msg('Đã kiểm xong trang cuối')}}
+function kqPgOk(){const R=kqPgRows();R.forEach(e=>{KD[String(e.sku).trim()]=1});LS.kd=JSON.stringify(KD);if(KP.p<KP.pages-1){KP.p++;KP.go=1;list(1)}else{list();msg('Đã kiểm xong trang cuối')}}
 function kqPgPop(){pop('Lật trang','<div class="mut">Mặc định mỗi trang tự lấp đầy vừa khít màn hình (không cắt giữa nhóm vendor, đầu trang lặp lại tiêu đề). Hoặc giới hạn số mã tối đa mỗi trang:</div><div class="nts">'+[0,10,15,20,30,40].map(x=>'<button data-sz="'+x+'"'+(x==KP.n?' class="pri"':'')+'>'+(x?x:'Tự vừa màn hình')+'</button>').join('')+'</div><input class="f" id="pj" type="number" inputmode="numeric" style="width:100%" placeholder="Nhảy tới trang (1–'+KP.pages+')"><div class="ip-ft" style="margin-top:8px"><button id="pjo" class="pri">Đi</button></div>',p=>{
   p.querySelectorAll('[data-sz]').forEach(b=>b.onclick=()=>{KP.keep=KP.start||0;KP.n=+b.dataset.sz;LS.kpa=KP.n;p.style.display='none';list(1)});
-  p.querySelector('#pjo').onclick=()=>{const v=+p.querySelector('#pj').value;if(v>=1&&v<=KP.pages){KP.p=v-1;p.style.display='none';list(1)}}})}
+  p.querySelector('#pjo').onclick=()=>{const v=+p.querySelector('#pj').value;if(v>=1&&v<=KP.pages){KP.p=v-1;KP.go=1;p.style.display='none';list(1)}}})}
 function kqNote(){const ids=[...chk],sk=[...new Set(ids.map(id=>String(D.list[id].sku).trim()))];if(!sk.length)return;
  pop('Ghi chú cho '+sk.length+' mã','<div class="nts">'+['Thiếu bảng','Sai giá','Hỏi lại','Hết hàng','Làm sau'].map(x=>'<button data-n="'+x+'">'+x+'</button>').join('')+'</div><input class="f" id="nti" style="width:100%" placeholder="Hoặc gõ ghi chú" value="'+esc(sk.length==1?KN[sk[0]]||'':'')+'"><div class="ip-ft" style="margin-top:8px"><button id="nd">Xóa ghi chú</button><button id="ns" class="pri">Lưu</button></div>',p=>{
   const inp=p.querySelector('#nti');p.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{inp.value=b.dataset.n});
