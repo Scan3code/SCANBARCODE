@@ -496,7 +496,7 @@ function ants(){const an=$('#ants');
  an.style.display='none'}
 function hdrH(){const th=$('#main th');return th?th.getBoundingClientRect().height:34}
 function hpoint(r,c,corner,m,hh,fr){let td=$('#main td[data-r="'+r+'"][data-c="'+c+'"]');if(!td){const q=[...document.querySelectorAll('#main td[data-r="'+r+'"][data-c]')];td=q[q.length-1]}if(!td)return null;
- const q=td.getBoundingClientRect(),tl=corner=='tl';let x=tl?q.left:q.right,y=tl?q.top:q.bottom,pin=false;
+ const q=td.getBoundingClientRect(),tl=corner=='tl';let x=tl?q.left:q.right,y=tl?q.top:(td.rowSpan>1&&td.parentNode?td.parentNode.getBoundingClientRect().bottom:q.bottom),pin=false;
  const T=m.top+hh+26,B=m.bottom-34,Lx=m.left+34,Rx=m.right-34;
  if(fr)x=(m.left+m.right)/2;else if(x<Lx){x=Lx;pin=true}else if(x>Rx){x=Rx;pin=true}
  if(y<T){y=T;pin=true}else if(y>B){y=B;pin=true}return{x,y,pin}}
@@ -508,7 +508,7 @@ if(window.visualViewport){const vv=visualViewport;vv.addEventListener('resize',(
 function hideFM(){$('#fm').style.display='none'}
 const IC={ct:'<circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8 16 19 4M16 16 5 4"/>',cp:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',ps:'<rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 5V3h6v2"/>'};
 function showFM(el){const f=$('#fm'),has=!!(CR&&clip&&CR.sh==S.tab),ic=a=>'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+IC[a]+'</svg>';
- const P=SL?PL[SL.r1]||{}:{},mg=(P.name?[['um','Tách tên']]:P.abs!==undefined?[['um','Tách dòng']]:[]).concat(SL&&fullRows()&&S[S.tab][SL.r1]&&S[S.tab][SL.r1].sku&&hdOf(SL.r1)!=hdOf(runOf(SL.r1)[0])?[['sp','Tách bảng']]:[]);
+ const P=SL?PL[SL.r1]||{}:{},mg=(P.name?[['um','Tách tên']]:P.abs!==undefined?[['um','Tách dòng']]:[]).concat(SL&&fullRows()&&S[S.tab][SL.r1]&&S[S.tab][SL.r1].sku&&hdOf(SL.r1)!=hdOf(runOf(SL.r1)[0])&&(()=>{const[ra,rb]=runOf(SL.r1);for(let x=ra;x<=rb;x++)if(PL[x]&&PL[x].name)return true;return false})()?[['sp','Tách bảng']]:[]);
  f.innerHTML=[['ct','Cắt'],['cp','Chép']].concat(has?[['ps','Dán']]:[]).concat(mg).concat([['more','▾'],['xd','Xóa'],['ins','Chèn']]).concat(has?[['pi','Chèn '+(CR.rows?'hàng':'ô')+' đã '+(CR.cut?'cắt':'sao chép')]]:[]).concat(SL&&fullRows()?[['mv','Chuyển']]:[]).map(x=>'<button data-a="'+x[0]+'">'+x[1]+'</button>').join('');f.style.display='flex';
  const w=f.offsetWidth,h=f.offsetHeight;f.style.left=Math.min(Math.max(6,(el?(el.getBoundingClientRect().left+el.getBoundingClientRect().width/2):innerWidth/2)-w/2),innerWidth-w-6)+'px';
  if(el){const r=el.getBoundingClientRect();let top=r.top-h-36;if(top<70)top=r.bottom+36;f.style.top=top+'px';f.style.bottom='auto'}else{f.style.top='auto';f.style.bottom='118px'}
@@ -516,7 +516,7 @@ function showFM(el){const f=$('#fm'),has=!!(CR&&clip&&CR.sh==S.tab),ic=a=>'<svg 
 document.addEventListener('touchstart',e=>{const f=$('#fm');if(f.style.display=='flex'&&!f.contains(e.target)&&!e.target.classList.contains('hd'))hideFM()},true);
 ['h1','h2'].forEach(id=>{const h=$('#'+id);h.addEventListener('touchstart',e=>{e.preventDefault();hideFM();if(!SL)return;
  const top=id=='h1',fr=SL.c1==0&&SL.c2==LASTC,fc=SL.r1==0&&SL.r2==S[S.tab].length-1&&SL.c1==SL.c2,anc={r:top?SL.r1:SL.r2,c:top?SL.c1:SL.c2},m0=M.getBoundingClientRect(),hh=hdrH();
- const ct=$('#main td[data-r="'+anc.r+'"][data-c="'+anc.c+'"]'),q=ct?ct.getBoundingClientRect():null,qx=q?(top?q.left:q.right):0,qy=q?(top?q.top:q.bottom):0;
+ const ct=$('#main td[data-r="'+anc.r+'"][data-c="'+anc.c+'"]'),q=ct?ct.getBoundingClientRect():null,qx=q?(top?q.left:q.right):0,qy=q?(top?q.top:(ct.rowSpan>1&&ct.parentNode?ct.parentNode.getBoundingClientRect().bottom:q.bottom)):0;
  const pT=!!q&&qy<m0.top+hh,pB=!!q&&qy>m0.bottom,pL=!!q&&qx<m0.left,pR=!!q&&qx>m0.right;
  let fx=e.touches[0].clientX,fy=e.touches[0].clientY,moved=0,drag=true;const x0=fx,y0=fy;$('#h1').style.pointerEvents=$('#h2').style.pointerEvents='none';
  const apply=()=>{if(!SL)return;const m=M.getBoundingClientRect(),px=Math.min(Math.max(fx+(top?6:-6),m.left+3),m.right-3),py=Math.min(Math.max(fy+(top?6:-6),m.top+hh+3),m.bottom-3),el=document.elementFromPoint(px,py),td=el&&el.closest('#main td[data-r]');if(!td)return;
