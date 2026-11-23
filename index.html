@@ -508,7 +508,7 @@ if(window.visualViewport){const vv=visualViewport;vv.addEventListener('resize',(
 function hideFM(){$('#fm').style.display='none'}
 const IC={ct:'<circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8 16 19 4M16 16 5 4"/>',cp:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',ps:'<rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 5V3h6v2"/>'};
 function showFM(el){const f=$('#fm'),has=!!(CR&&clip&&CR.sh==S.tab),ic=a=>'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+IC[a]+'</svg>';
- const P=SL?PL[SL.r1]||{}:{},mg=(P.name?[['um','Tách tên']]:P.abs!==undefined?[['um','Tách dòng']]:[]).concat(SL&&fullRows()&&S[S.tab][SL.r1]&&S[S.tab][SL.r1].sku&&hdOf(SL.r1)!=hdOf(runOf(SL.r1)[0])&&(()=>{const[ra,rb]=runOf(SL.r1);for(let x=ra;x<=rb;x++)if(PL[x]&&PL[x].name)return true;return false})()?[['sp','Tách bảng']]:[]);
+ const P=SL?PL[SL.r1]||{}:{},mg=(P.name?[['um','Tách tên']]:P.abs!==undefined?[['um','Tách dòng']]:[]).concat(SL&&fullRows()&&S[S.tab][SL.r1]&&S[S.tab][SL.r1].sku&&canSplitTbl(SL.r1)?[['sp','Tách bảng']]:[]);
  f.innerHTML=[['ct','Cắt'],['cp','Chép']].concat(has?[['ps','Dán']]:[]).concat(mg).concat([['more','▾'],['xd','Xóa'],['ins','Chèn']]).concat(has?[['pi','Chèn '+(CR.rows?'hàng':'ô')+' đã '+(CR.cut?'cắt':'sao chép')]]:[]).concat(SL&&fullRows()?[['mv','Chuyển']]:[]).map(x=>'<button data-a="'+x[0]+'">'+x[1]+'</button>').join('');f.style.display='flex';
  const w=f.offsetWidth,h=f.offsetHeight;f.style.left=Math.min(Math.max(6,(el?(el.getBoundingClientRect().left+el.getBoundingClientRect().width/2):innerWidth/2)-w/2),innerWidth-w-6)+'px';
  if(el){const r=el.getBoundingClientRect();let top=r.top-h-36;if(top<70)top=r.bottom+36;f.style.top=top+'px';f.style.bottom='auto'}else{f.style.top='auto';f.style.bottom='118px'}
@@ -551,6 +551,8 @@ M.addEventListener('click',e=>{if(S.tab=='Sheet3'){const tr=e.target.closest('tr
  lastTap=[now,rr,cc];pick(rr,cc,rr,cc)});
 function runOf(i){const R=S[S.tab];let a=i,b=i;while(a>0&&R[a-1].sku)a--;while(b<R.length-1&&R[b+1].sku)b++;return[a,b]}
 const hdOf=x=>PL&&PL[x]&&PL[x].abs!==undefined?PL[x].abs:x;
+const runHasMerge=r=>{const R=S[S.tab];if(!R||!R[r]||!R[r].sku||!PL)return false;const[a,b]=runOf(r);for(let x=a;x<=b;x++)if(PL[x]&&PL[x].name)return true;return false};
+const canSplitTbl=r=>{const R=S[S.tab];return !!(R&&R[r]&&R[r].sku&&hdOf(r)!=hdOf(runOf(r)[0])&&runHasMerge(r))};
 function packRun(R,k){const[a,b]=runOf(k),heads=[],mem=new Map();
  for(let x=a;x<=b;x++){const h=hdOf(x);if(!mem.has(h)){mem.set(h,[]);heads.push(h)}mem.get(h).push(x)}
  const order=[];heads.forEach(h=>mem.get(h).forEach(x=>order.push(x)));const rows=order.map(x=>R[x]),pos=new Map();
@@ -564,7 +566,7 @@ function mergeItems(i0){const sh=S.tab,R=S[sh],P=PL[i0]||{},out=[];if(!R[i0]||!R
  const doIt=(f,t)=>()=>{snap();f();save();clearSel();draw();msg(t)};
  if(P.name){const m=mem(i0);out.push(['Tách cụm này thành 2 bảng (chọn mã bắt đầu bảng thứ 2)…',()=>popItems('Bảng thứ 2 bắt đầu từ mã nào?',[i0].concat(m).slice(1).map(x=>['<b>'+esc(R[x].sku)+'</b> · '+esc(String(R[x].e&&R[x].e.ten||'').slice(0,40))+'<br><small>dòng '+(x+1)+' — từ mã này trở xuống thành bảng mới</small>',()=>{snap();R.splice(x,0,blank());save();clearSel();draw();msg('Đã tách thành 2 bảng ở dòng '+(x+1))}]))]);out.push(['Gỡ cả dòng ghép (tách '+P.n+' dòng)',doIt(()=>{R[i0].nm=1;m.forEach(x=>R[x].nm=1);if(sh=='A6'){delete R[i0].mg6;m.forEach(x=>delete R[x].mg6)}},'Đã gỡ ghép')]);if(m.length>1)out.push(['Gỡ bớt 1 dòng khỏi ghép (còn '+(P.n-1)+' dòng)',doIt(()=>{R[m[m.length-1]].nm=1},'Đã gỡ bớt 1 dòng')])}
  if(P.abs!==undefined)out.push(['Tách dòng này khỏi ghép',doIt(()=>{R[i0].nm=1},'Đã tách dòng')]);
- out.push(hasNm?['Bật ghép tên lại cho cụm này',doIt(()=>{for(let x=a;x<=b;x++){delete R[x].nm;if(sh=='A6')R[x].mg6=1}},'Đã bật ghép tên cho cụm')]:['Tắt ghép tên cho cụm này',doIt(()=>{for(let x=a;x<=b;x++)R[x].nm=1},'Đã tắt ghép tên cho cụm')]);return out}
+ if(hasNm||runHasMerge(i0))out.push(hasNm?['Bật ghép tên lại cho cụm này',doIt(()=>{for(let x=a;x<=b;x++){delete R[x].nm;if(sh=='A6')R[x].mg6=1}},'Đã bật ghép tên cho cụm')]:['Tắt ghép tên cho cụm này',doIt(()=>{for(let x=a;x<=b;x++)R[x].nm=1},'Đã tắt ghép tên cho cụm')]);return out}
 let ASK6=0;
 function ask6(){if(S.tab!='A6'||Date.now()<ASK6||$('#pop').style.display=='block')return;const R=S.A6,cs=clusters(R,'A6',false).filter(c=>c.ix.every(k=>!R[k].mg6&&!R[k].nm));if(!cs.length)return;
  popItems('A6: có '+cs.length+' nhóm dòng cùng vendor, giá bán, giá gốc có thể ghép tên. Ghép không?',[['Ghép '+cs.length+' nhóm: '+cs.slice(0,3).map(c=>esc(c.name)).join(' • ')+(cs.length>3?' …':''),()=>{snap();cs.forEach(c=>c.ix.forEach(k=>R[k].mg6=1));save();draw();msg('Đã ghép tên '+cs.length+' nhóm ở A6')}],
@@ -574,8 +576,8 @@ function act(a){if(!SL)return;const sh=S.tab,R=S[sh],rows=selRows(),n=rows.lengt
  if(a=='x'){clearSel();CR=null;return paint()}
  if(a=='mv')return mvPop();
  if(a=='um'){const it=mergeItems(SL.r1).filter(x=>/^(Gỡ|Tách)/.test(x[0]));if(!it.length)return;return it.length==1?it[0][1]():popItems('Tách tên ghép',it)}
- if(a=='more')return popItems('Thêm',[['Sửa ô đầu',()=>openEdit(SL.r1,SL.c1)]].concat(SL.r2>SL.r1?[['Điền xuống từ dòng đầu',()=>act('fd')]]:[]).concat(mergeItems(SL.r1)).concat([['Đặt lại độ rộng các cột (hoặc chạm đúp vạch kéo ở tiêu đề cột)',()=>{delete CWS[S.tab];LS.cws=JSON.stringify(CWS);draw()}],['Giới hạn ký tự của 1 tên ghép: '+MAXL()+' (bấm để đổi)',()=>{const v=prompt('Giới hạn số ký tự cho 1 tên ghép (từ 20 trở lên):',MAXL());if(v&&+v>=20){LS.maxLen=String(Math.round(+v));draw();msg('Giới hạn tên ghép: '+LS.maxLen+' ký tự')}}],['Bỏ chọn',()=>act('x')]]));
- if(a=='ins')return popItems('Chèn',[['✂ Chèn 1 dòng trống phía trên để tách 2 bảng (giữ nguyên cụm ghép tên)',()=>act('sp')],['Chèn '+nr+' dòng trống phía trên',()=>act('ia')],['Chèn '+nr+' dòng trống phía dưới',()=>act('ib')]].concat(has?[['Chèn '+(CR.rows?'hàng':'ô')+' đã '+(CR.cut?'cắt':'sao chép')+' lên trên',()=>act('pi')]]:[]));
+ if(a=='more')return popItems('Thêm',[['Sửa ô đầu',()=>openEdit(SL.r1,SL.c1)]].concat(SL.r2>SL.r1?[['Điền xuống từ dòng đầu',()=>act('fd')]]:[]).concat(mergeItems(SL.r1)).concat([['Đặt lại độ rộng các cột (hoặc chạm đúp vạch kéo ở tiêu đề cột)',()=>{delete CWS[S.tab];LS.cws=JSON.stringify(CWS);draw()}]]).concat(PL&&PL.some(p=>p&&p.name)?[['Giới hạn ký tự của 1 tên ghép: '+MAXL()+' (bấm để đổi)',()=>{const v=prompt('Giới hạn số ký tự cho 1 tên ghép (từ 20 trở lên):',MAXL());if(v&&+v>=20){LS.maxLen=String(Math.round(+v));draw();msg('Giới hạn tên ghép: '+LS.maxLen+' ký tự')}}]]:[]).concat([['Bỏ chọn',()=>act('x')]]));
+ if(a=='ins')return popItems('Chèn',(canSplitTbl(selRows(1)[0])?[['✂ Tách 2 bảng: chèn 1 dòng trống phía trên (giữ cụm ghép tên)',()=>act('sp')]]:[]).concat([['Chèn '+nr+' dòng trống phía trên',()=>act('ia')],['Chèn '+nr+' dòng trống phía dưới',()=>act('ib')]]).concat(has?[['Chèn '+(CR.rows?'hàng':'ô')+' đã '+(CR.cut?'cắt':'sao chép')+' lên trên',()=>act('pi')]]:[]));
  if(a=='xd')return popItems('Xóa',[['Xóa '+n+' dòng (các dòng sau dồn lên)',()=>act('dr')],['Chỉ xóa nội dung ô (giữ dòng)',()=>act('cl')]]);
  if(a=='cp'||a=='ct')return doCopy(a=='ct');
  if(a=='ps')return doPaste(false);if(a=='pi')return doPaste(true);
