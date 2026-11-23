@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content">
 <title>Bảng giá A3/A4/A6</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231d6f5a'/%3E%3Ctext x='32' y='42' font-size='26' font-weight='700' text-anchor='middle' fill='white' font-family='sans-serif'%3EA3%3C/text%3E%3C/svg%3E">
-<meta name="theme-color" content="#1d6f5a"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f1f5f3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#232b28" media="(prefers-color-scheme: dark)"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <style>
 :root{--bg:#fff;--fg:#1c1f1d;--bd:#c9d2cd;--hd:#f1f5f3;--ac:#1d6f5a;--sel:#cfe8df;--er:#fbd9d6;--wn:#fff1c2;--hz:#cdeef2;--mgf:#d9f3e4;--cx:#fdeedd;--mut:#6b7772;--acs:#e3f1ec}
 @media(prefers-color-scheme:dark){:root:not([data-theme]){--mgf:#1c4a35;--cx:#4a3112;--mut:#97a39d;--acs:#1c3a31;--hz:#1f4a52;--bg:#161a18;--fg:#e6ebe8;--bd:#46564e;--hd:#232b28;--ac:#4fb597;--sel:#244a3f;--er:#5a2623;--wn:#5a4a14}}
@@ -613,6 +613,7 @@ const KQ_UNISEX=/aothun/; // hàng không ghi nam / nữ nhưng có ở cả 2 q
 const qStrip=s=>String(s||'').toLowerCase().replace(/đ/g,'d').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
 function classQuay(ten){const nm=qStrip(String(ten||'').replace(/nằm/gi,' ')).replace(/viet\s*nam/g,'vn'),cm=nm.replace(/[^a-z0-9]/g,'');
  const reTH=/(?:chan(?!\s*vay)|drap|ga giuong|goi|men|khan|kmat|ktam|dep|giay|sandal|\bvo\b|\btat\b|tui|balo|ba lo|valy|vali|^non\b|^mu\b|that lung|day nit|khau trang|gang tay|bao tay|tap de|ao mua|nem\b|chieu\b|tham\b|tam trai|bo trai|vi gap|ca vat|caravat|mung|gotua|(?:^|[^a-z])g\.\s*nam|(?:^|[^a-z])nem)/;
+ if(/^(quan|ao|bo quan ao)\b/.test(nm)&&!/^ao (mua|goi|om)\b/.test(nm)&&!/(tre em|treem|be trai|betrai|be gai|begai|so sinh|nhi dong|kids|baby|thieu nhi|hoc sinh|\bbe\b|\bte\b)/.test(nm)){const a=/(?:^|\s)nu(?:\s|$)/.test(nm),b=/(?:^|\s)nam(?:\s|$)/.test(nm);if(a&&!b)return'NU';if(b&&!a)return'NAM'}
  if(reTH.test(nm)||/^vo(nam|nu|tre|be)/.test(cm)||/nemxep/.test(cm))return'TONG_HOP';
  if(/(?:tre em|treem|be trai|betrai|be gai|begai|so sinh|nhi dong|kids|baby|thieu nhi|hoc sinh|\bbe\b|\bte\b)/.test(nm))return'TRE_EM';
  const isNu=/nu/.test(cm)||/(?:^|\s)(?:dam|vay)(?:\s|$)/.test(nm)||/aonguc|dambau/.test(cm),isNam=/nam/.test(cm);
@@ -647,7 +648,7 @@ function kqCx(){if(D.cx)return D.cx;const cx={};let cur=[],run=[];
    cur=cur.filter(c=>c.l<l).concat({l,h:x.h,i:x.i})});run=[]};
  D.rows.forEach((e,i)=>{if(e.h){run.push({h:e,i});return}if(run.length)fin();cx[e.id]={c:cur.map(c=>c.h),k:cur.filter(c=>c.l<4).map(c=>c.i).join(','),s:(cur.find(c=>c.l>=4)||{i:''}).i}});
  return D.cx=cx}
-function kqPage(out){const z=Z.Sheet3||1,mh=M.clientHeight,N=KP.n||(mh>150?1e9:20),dr=out.filter(e=>!e.h),cx=kqCx(),B=mh>150?(mh-(hdrH()||34))/z-24:1e9,cap=((CWS.Sheet3&&CWS.Sheet3.ten)||620)-14,U=[];let u=null;
+function kqPage(out){const z=Z.Sheet3||1,mh=M.clientHeight+($('#tray')?$('#tray').offsetHeight:0)-44,N=KP.n||(mh>150?1e9:20),dr=out.filter(e=>!e.h),cx=kqCx(),B=mh>150?(mh-(hdrH()||34))/z-24:1e9,cap=((CWS.Sheet3&&CWS.Sheet3.ten)||620)-14,U=[];let u=null;
  dr.forEach(e=>{const m=cx[e.id]||{c:[],k:'',s:''};if(!u||u.k!==m.k){u={k:m.k,d:[],subs:[]};U.push(u)}u.d.push(e);const sb=u.subs[u.subs.length-1];if(sb&&sb.s===m.s)sb.d.push(e);else u.subs.push({s:m.s,d:[e]})});
  const hh=e=>tw(String(e.ten||''),1)>cap?47:33,ch=e=>(cx[e.id]||{c:[]}).c,
   cost=(rows,pv)=>{let h=0;rows.forEach(e=>{const c=ch(e);let i=0;while(i<c.length&&c[i]===pv[i])i++;h+=(c.length-i)*36+hh(e);pv=c});return h},
@@ -660,7 +661,8 @@ function kqPage(out){const z=Z.Sheet3||1,mh=M.clientHeight,N=KP.n||(mh>150?1e9:2
    if(!deep&&subs.length>1){subs.forEach(s=>place(s.d,[],1));return}
    rows.forEach(e=>{if(cur.d.length&&(cur.d.length+1>N||cur.h+cost([e],pv())>B))fl();put([e])})};
  U.forEach(x=>place(x.d,x.subs,0));fl();
- const pg=pgs.map(d=>{const rows=[];let pv=[];d.forEach(e=>{const c=ch(e);let i=0;while(i<c.length&&c[i]===pv[i])i++;for(let j=i;j<c.length;j++)rows.push(c[j]);rows.push(e);pv=c});return{rows,d}});
+ let pg=pgs.map(d=>{const rows=[];let pv=[];d.forEach(e=>{const c=ch(e);let i=0;while(i<c.length&&c[i]===pv[i])i++;for(let j=i;j<c.length;j++)rows.push(c[j]);rows.push(e);pv=c});return{rows,d}});
+ {const ck=[N,z,M.clientWidth,dr.length,dr.length?dr[0].id:'',dr.length?dr[dr.length-1].id:'',dr.length?dr[dr.length>>1].id:'',D.rows.length].join('|');if(KP.ck===ck&&KP.cp)pg=KP.cp;else{KP.ck=ck;KP.cp=pg}}
  let tot=0;pg.forEach(g=>{g.st=tot;tot+=g.d.length});KP.total=tot;KP.pages=Math.max(1,pg.length);
  if(KP.keep==null&&!KP.go&&KP.start!=null&&KP.had)KP.keep=KP.start;KP.go=0;
  if(KP.keep!=null){let j=pg.findIndex(g=>g.st+g.d.length>KP.keep);KP.p=j<0?0:j;KP.keep=null}
