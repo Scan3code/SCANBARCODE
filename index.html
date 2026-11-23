@@ -867,11 +867,14 @@ function mvDo(to,src){const R=S[to];snap();const items=src.items.map(x=>Object.a
  draw();msg('Đã chuyển '+items.length+' mã từ '+src.from+' sang '+to+' (dòng '+(a+1)+(b>a?' đến '+(b+1):'')+')')}
 function insertAt(sh,i,where,go,src){const R=S[sh],P=plan(R,sh),at=insPos(P,i,where),items=insItems(src);if(!items.length)return;snap(!src);
  R.splice(at,0,...items);const a=at,b=at+items.length-1;
+ const mk=src?0:kqAutoMark(sh,items);
  if(src){const st=new Set(src.rows);S[src.from]=S[src.from].filter((_,k)=>!st.has(k));if(!S[src.from].length)S[src.from].push(blank());clearSel();CR=null}else chk.clear();
  let txt=(src?'Đã chuyển ':'Đã chèn ')+items.length+' mã '+(src?'từ '+src.from+' ':'')+'vào cụm ở '+sh+', dòng '+(a+1)+(b>a?' đến '+(b+1):'');
  {const P2=plan(R,sh);let a0=at,b0=at;while(a0>0&&R[a0-1].sku)a0--;while(b0<R.length-1&&R[b0+1].sku)b0++;let cnt=0;for(let k=a0;k<=b0;k++)if(!(P2[k]&&P2[k].abs!==undefined))cnt++;if(cnt>10)txt+='. ⚠ Cụm này nay có '+cnt+' mã, quá 10 mã'}
+ if(mk)txt+=' · đã đánh dấu '+sh+' cho '+mk+' mã';
  UN[sh]=(UN[sh]||0)+items.length;UNP[sh]={a:UNP[sh]?Math.min(UNP[sh].a,a):a,b:Math.max(UNP[sh]?UNP[sh].b:0,b)};LS.un=JSON.stringify(UN);LS.unp=JSON.stringify(UNP);
  draw();if(go)goTab(sh);msg(txt)}
+function kqAutoMark(sh,items){if(!KP)return 0;let n=0;items.forEach(it=>{const k=String(it.sku).trim(),a=KM[k]||[];if(k&&a.indexOf(sh)<0){KM[k]=a.concat(sh);n++}});if(n)LS.km=JSON.stringify(KM);return n}
 function push(sh){
 const pmsg=(t,sh)=>msg(t);
 if(!chk.size)return msg('Chưa tick mã nào ở Sheet3');snap(true);const R=S[sh],seen=new Set(),items=[];
@@ -880,7 +883,8 @@ if(!chk.size)return msg('Chưa tick mã nào ở Sheet3');snap(true);const R=S[s
  let last=-1;R.forEach((r,i)=>{if(r.sku)last=i});const gap=LS.gap&&last>=0,pos=last<0?0:last+1+(gap?1:0);
  if(gap&&R[last+1])R[last+1]=blank();
  items.forEach((it,k)=>{if(pos+k<R.length)R[pos+k]=it;else R.push(it)});while(R.length<pos+items.length+3)R.push(blank());
- {const cl=clusters(R,sh,true),ab=cl.reduce((n,c)=>n+c.ix.length-1,0),c6=sh=='A6'?clusters(R,'A6',false).filter(c=>c.ix.every(k=>!R[k].mg6&&!R[k].nm)).length:0;pmsg('Đã đẩy '+items.length+' dòng sang '+sh+' (dòng '+(pos+1)+' đến '+(pos+items.length)+')'+(gap?', cách 1 dòng':', nối đuôi')+(cl.length?' · tự ghép tên '+cl.length+' nhóm (gộp '+ab+' dòng)':'')+(c6?' · A6 có '+c6+' nhóm có thể ghép tên, mở A6 để chọn':''),sh)}UN[sh]=(UN[sh]||0)+items.length;LS.un=JSON.stringify(UN);UNP[sh]={a:UNP[sh]?Math.min(UNP[sh].a,pos):pos,b:Math.max(UNP[sh]?UNP[sh].b:0,pos+items.length-1)};LS.unp=JSON.stringify(UNP);chk.clear();save();list();tabsDraw()}
+ const mk=kqAutoMark(sh,items);
+ {const cl=clusters(R,sh,true),ab=cl.reduce((n,c)=>n+c.ix.length-1,0),c6=sh=='A6'?clusters(R,'A6',false).filter(c=>c.ix.every(k=>!R[k].mg6&&!R[k].nm)).length:0;pmsg('Đã đẩy '+items.length+' dòng sang '+sh+' (dòng '+(pos+1)+' đến '+(pos+items.length)+')'+(gap?', cách 1 dòng':', nối đuôi')+(cl.length?' · tự ghép tên '+cl.length+' nhóm (gộp '+ab+' dòng)':'')+(c6?' · A6 có '+c6+' nhóm có thể ghép tên, mở A6 để chọn':'')+(mk?' · đã đánh dấu '+sh+' cho '+mk+' mã':''),sh)}UN[sh]=(UN[sh]||0)+items.length;LS.un=JSON.stringify(UN);UNP[sh]={a:UNP[sh]?Math.min(UNP[sh].a,pos):pos,b:Math.max(UNP[sh]?UNP[sh].b:0,pos+items.length-1)};LS.unp=JSON.stringify(UNP);chk.clear();save();list();tabsDraw()}
 /* ---------- A3 / A4 / A6 ---------- */
 let CWS=(()=>{try{return JSON.parse(LS.cws||'{}')}catch(e){return{}}})();
 const GSRC={sku:1,nh:8,ten:2,dvt:3,gia:5,goc:4,qt:6,ad:7};
@@ -958,17 +962,19 @@ function freplace(all){const F=FIND;if(!F)return;if(!F.q.trim())return msg('Nh�
  tg.forEach(([i,k])=>{const res=replaceText(rawOf(i,k),F.q,F.rp);if(res.n){n+=res.n;cells++;setF(sh,i,FK[k],res.s)}});
  save();const keep=Math.max(0,F.i);draw();findRun();if(F.l.length&&!all)fgo(Math.min(keep,F.l.length-1));msg(all?'Đã thay '+n+' chỗ trong '+cells+' ô':'Đã thay '+n+' chỗ trong ô này')}
 function findBar(){const fb=$('#fb'),F=FIND;
- fb.innerHTML='<div id="sb"><div class="sr"><input class="f" id="fq" placeholder="Tìm trong bảng…" value="'+esc(F.q)+'" autocomplete="off"><span id="fc"></span><button id="fp" aria-label="Kết quả trước">▲</button><button id="fn" aria-label="Kết quả sau">▼</button><button id="fr" class="'+(F.rep?'on1':'')+'">Thay thế</button><button id="fx" aria-label="Đóng">✕</button></div><div class="sr" id="rr" style="display:'+(F.rep?'flex':'none')+'"><input class="f" id="fw" placeholder="Thay bằng…" value="'+esc(F.rp)+'" autocomplete="off"><button id="f1">Thay</button><button id="fa" class="pri">Thay tất cả</button></div></div>';
- const q=$('#fq'),w=$('#fw');
- q.oninput=()=>{F.q=q.value;F.i=-1;findRun();if(F.l.length){const a=SL?SL.r1:0;let j=F.l.findIndex(x=>x[0]>=a);fgo(j<0?0:j)}};
+ fb.innerHTML='<div id="sb"><div class="sr"><span class="clw"><input class="f" id="fq" placeholder="Tìm trong bảng…" value="'+esc(F.q)+'" autocomplete="off"><button id="fqc" class="clr" aria-label="Xóa nội dung">✕</button></span><span id="fc"></span><button id="fp" aria-label="Kết quả trước">▲</button><button id="fn" aria-label="Kết quả sau">▼</button><button id="fr" class="'+(F.rep?'on1':'')+'">Thay thế</button><button id="fx" aria-label="Đóng">✕</button></div><div class="sr" id="rr" style="display:'+(F.rep?'flex':'none')+'"><span class="clw"><input class="f" id="fw" placeholder="Thay bằng…" value="'+esc(F.rp)+'" autocomplete="off"><button id="fwc" class="clr" aria-label="Xóa nội dung">✕</button></span><button id="f1">Thay</button><button id="fa" class="pri">Thay tất cả</button></div></div>';
+ const q=$('#fq'),w=$('#fw'),cq=$('#fqc'),cw=$('#fwc'),shq=()=>{cq.style.display=q.value?'block':'none'},shw=()=>{cw.style.display=w.value?'block':'none'};
+ q.oninput=()=>{shq();F.q=q.value;F.i=-1;findRun();if(F.l.length){const a=SL?SL.r1:0;let j=F.l.findIndex(x=>x[0]>=a);fgo(j<0?0:j)}};
  q.onkeydown=e=>{if(e.key=='Enter'){e.preventDefault();fstep(e.shiftKey?-1:1)}};
- w.oninput=()=>F.rp=w.value;w.onkeydown=e=>{if(e.key=='Enter'){e.preventDefault();freplace(false)}};
+ w.oninput=()=>{shw();F.rp=w.value};w.onkeydown=e=>{if(e.key=='Enter'){e.preventDefault();freplace(false)}};
+ cq.onclick=()=>{q.value='';q.oninput();q.focus()};
+ cw.onclick=()=>{w.value='';w.oninput();w.focus()};
  $('#fp').onclick=()=>fstep(-1);$('#fn').onclick=()=>fstep(1);$('#fx').onclick=toggleFind;
  $('#fr').onclick=()=>{F.rep=!F.rep;$('#rr').style.display=F.rep?'flex':'none';$('#fr').classList.toggle('on1',!!F.rep);if(F.rep)w.focus()};
  $('#f1').onclick=()=>freplace(false);$('#fa').onclick=()=>freplace(true);
  fb.querySelectorAll('button').forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onpointerdown=e=>e.preventDefault()});
  [q,w].forEach(e=>{e.onfocus=()=>document.body.classList.add('ed','fed');e.onblur=()=>setTimeout(()=>{const a=document.activeElement;if(!a||!/^f[qw]$/.test(a.id))document.body.classList.remove('ed','fed')},150)});
- findRun()}
+ shq();shw();findRun()}
 function draw(){save();hideFM();bar();tabsDraw();
  if(S.tab=='Sheet3'){SL=null;if(ED)closeEdit();list()}else grid();paint();findRun();setTimeout(()=>{askPend();ask6()},60)}
 /* chụm 2 ngón để zoom bảng, chặn zoom/tải lại cả trang */
@@ -978,7 +984,7 @@ M.addEventListener('touchmove',e=>{if(pz&&e.touches.length==2){e.preventDefault(
 M.addEventListener('touchend',e=>{if(pz&&e.touches.length<2){pz=null;LS.z=JSON.stringify(Z);if(KP&&S.tab=='Sheet3'){KP.keep=KP.start||0;list(1)}}});
 document.addEventListener('gesturestart',e=>e.preventDefault());
 draw();load();
-if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){const V='20261123a';let fresh=true;try{fresh=LS.appv===V;if(!fresh){LS.appv=V;fresh=LS.appv!==V}}catch(e){}
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){const V='20261123b';let fresh=true;try{fresh=LS.appv===V;if(!fresh){LS.appv=V;fresh=LS.appv!==V}}catch(e){}
  if(!fresh)navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>window.caches?caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))):0).catch(()=>{}).then(()=>location.reload());
  else navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{})}
 </script></body></html>
