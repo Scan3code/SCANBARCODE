@@ -12,7 +12,7 @@
 3. Việc chạy lâu (tra web hàng loạt, ...) phải chạy NỀN và hiện tiến trình ĐAN NGAY TRONG BẢNG như Excel: trạng thái ở chính dòng đó (⏳ Đang tra… → ✍ Điền) và 1 chip ở dải thông tin trên cùng (wqChip). TUYỆT ĐỐI không dùng thanh/hộp nổi che lên dữ liệu, không dùng pop() che màn hình; người dùng vẫn thao tác tiếp được.
 4. Mọi thay đổi dữ liệu đều snap() trước để Hoàn tác được.
 5. "Thêm sang…" (mvPop/mvDo/insertAt) là SAO CHÉP mã sang tab khác, KHÔNG xóa ở tab nguồn.
-6. Tên phiên đang mở luôn hiện ở chip đầu dải thông tin (sesChip): bấm vào tên chỉ để đổi tên phiên đang mở (trên máy hoặc online); mọi thao tác khác với phiên nằm ở nút Phiên; ＋ (không kèm chữ) để tạo phiên mới. Phiên (trên máy và online) đều lưu bằng sessData() và khôi phục bằng applySess(): bảng A3/A4/A6, dấu kiểm KM/KN/KD, tab nguồn Sheet3 (LS.src) và trạng thái kiểm bảng (quầy, A3/A4/A6/Tick, trang đang lật). Thêm gì cần lưu theo phiên thì sửa 2 hàm đó. Phiên trên máy tự lưu ngầm (autoLocal) sau mỗi thay đổi; phiên online chỉ lưu khi bấm lưu. Mở phiên online thì tách khỏi phiên trên máy để không ghi đè nhầm.
+6. Tên phiên đang mở luôn hiện ở chip đầu dải thông tin (sesChip): bấm vào tên chỉ để sửa tên ngay tại chip (Enter hoặc bấm ra ngoài là lưu, Esc là hủy) cho phiên đang mở (trên máy hoặc online; phiên online thì đổi tên xong lưu luôn lên sheet); mọi thao tác khác với phiên nằm ở nút Phiên; ＋ (không kèm chữ) để tạo phiên mới. Phiên (trên máy và online) đều lưu bằng sessData() và khôi phục bằng applySess(): bảng A3/A4/A6, dấu kiểm KM/KN/KD, tab nguồn Sheet3 (LS.src) và trạng thái kiểm bảng (quầy, A3/A4/A6/Tick, trang đang lật). Thêm gì cần lưu theo phiên thì sửa 2 hàm đó. Phiên trên máy tự lưu ngầm (autoLocal) sau mỗi thay đổi; phiên online chỉ lưu khi bấm lưu. Mở phiên online thì tách khỏi phiên trên máy để không ghi đè nhầm.
 7. Dọn code: hàm/hằng/CSS không còn được gọi thì xóa, đừng để dư.
 8. Nút kính lúp (#bf) nằm ở thanh tab dưới cùng cạnh Sheet3/A3/A4/A6 cho dễ bấm; KHÔNG đặt lại ở thanh trên và không dùng nút nổi đè lên bảng.
 =================================================================
@@ -90,7 +90,7 @@ td.cpy{outline:1.5px dashed var(--ac);outline-offset:-2px}
 #bar{gap:4px}.row2{display:flex;gap:2px;align-items:center;width:100%;justify-content:space-between}
 .g td{white-space:normal;word-break:normal;overflow-wrap:normal;line-height:16px;vertical-align:middle}.g td.nw{white-space:nowrap}.g td.gm{text-align:center;font-weight:600;color:var(--ac)}
 #info{display:flex;gap:5px;padding:4px 6px;overflow-x:auto;border-bottom:1px solid var(--bd);font-size:11.5px;align-items:center}
-.ch{flex:none;padding:3px 9px;border-radius:999px;background:var(--hd);color:var(--fg);white-space:nowrap}.ch.ok{background:var(--acs);color:var(--ac);font-weight:600}.ch.wn{background:var(--wn)}.ch.er{background:var(--er)}.ch.btn{font-weight:600;border:1px solid var(--bd)}
+.ch{flex:none;padding:3px 9px;border-radius:999px;background:var(--hd);color:var(--fg);white-space:nowrap}.ch.ok{background:var(--acs);color:var(--ac);font-weight:600}.ch.wn{background:var(--wn)}.ch.er{background:var(--er)}.ch.btn{font-weight:600;border:1px solid var(--bd)}.ch .rn{font:inherit;color:inherit;background:transparent;border:0;outline:0;padding:0;min-width:8ch;max-width:60vw}.ch:has(.rn){box-shadow:inset 0 0 0 2px var(--ac)}
 :root{--bd2:#9db0a6;--zb:#f5f8f6}@media(prefers-color-scheme:dark){:root:not([data-theme]){--bd2:#5d6f66;--zb:#1b2220}}:root[data-theme=dark]{--bd2:#5d6f66;--zb:#1b2220}
 :where(tr:nth-child(even)) td{background:var(--zb)}
 th{border-bottom:2px solid var(--bd2)}td.n{border-right:2px solid var(--bd2)}
@@ -457,11 +457,17 @@ async function applySess(d){
  if(d.km){KM=d.km;KMH=[];LS.km=JSON.stringify(KM);KN=d.kn||{};LS.kn=JSON.stringify(KN);KD=d.kd||{};LS.kd=JSON.stringify(KD)}
  if('kq' in d)kqRestore(d.kq);
  SL=null;CR=null;chk.clear()}
-async function renameLocal(x){const n=prompt('Tên mới:',x.name);if(!n||!n.trim()||n.trim()==x.name)return;const nm=n.trim();try{const f=(await dbq('readonly',z=>z.get(x.id)))||x;f.name=nm;await dbq('readwrite',z=>z.put(f));x.name=nm}catch(e){return msg('Không đổi được tên: '+e)}if((JSON.parse(LS.lcur||'{}')).id==x.id)LS.lcur=JSON.stringify({id:x.id,name:nm});msg('Đã đổi tên');draw()}
-async function sessRename(){let c=null,o=null;try{c=JSON.parse(LS.lcur||'null');o=JSON.parse(LS.cur||'null')}catch(e){}
- if(c){let x=null;try{await flushLocal();x=await dbq('readonly',z=>z.get(c.id))}catch(e){}if(!x)return msg('Phiên này chưa được lưu trên máy');return renameLocal(x)}
- if(o){const n=prompt('Tên mới (đổi tên sẽ lưu luôn bảng hiện tại lên phiên online):',o.name);if(n&&n.trim()&&n.trim()!=o.name)saveSess(o.id,n.trim());return}
- msg('Chưa có phiên đang mở. Bấm Phiên để tạo hoặc mở phiên')}
+async function renameLocal(x,given){const n=given||prompt('Tên mới:',x.name);if(!n||!n.trim()||n.trim()==x.name)return;const nm=n.trim();try{const f=(await dbq('readonly',z=>z.get(x.id)))||x;f.name=nm;await dbq('readwrite',z=>z.put(f));x.name=nm}catch(e){return msg('Không đổi được tên: '+e)}if((JSON.parse(LS.lcur||'{}')).id==x.id)LS.lcur=JSON.stringify({id:x.id,name:nm});msg('Đã đổi tên');draw()}
+async function sessRename(b){let c=null,o=null;try{c=JSON.parse(LS.lcur||'null');o=JSON.parse(LS.cur||'null')}catch(e){}
+ const cur=c||o;if(!cur||!b)return msg('Chưa có phiên đang mở. Bấm Phiên để tạo hoặc mở phiên');
+ b.innerHTML='<input class="rn" maxlength="60" enterkeyhint="done" aria-label="Tên phiên">';const i=b.firstChild;i.value=cur.name;
+ const fit=()=>i.style.width=Math.max(8,Math.min(28,i.value.length+1))+'ch';fit();i.oninput=fit;
+ let fin=0;const done=async()=>{if(fin)return;fin=1;const n=i.value.trim();if(!n||n==cur.name)return draw();
+  if(!c){draw();return saveSess(o.id,n)}
+  let x=null;try{await flushLocal();x=await dbq('readonly',z=>z.get(c.id))}catch(e){}
+  if(!x){draw();return msg('Phiên này chưa được lưu trên máy')}await renameLocal(x,n)};
+ i.onkeydown=e=>{if(e.key=='Enter'){e.preventDefault();i.blur()}else if(e.key=='Escape'){fin=1;draw()}};
+ i.onblur=done;i.focus();i.select()}
 function localItem(x){let c=null;try{c=JSON.parse(LS.lcur||'null')}catch(e){}const cur=c&&c.id==x.id;
  popItems(esc(x.name)+(cur?' (đang mở)':''),(cur?[]:[['Mở phiên này (thay bảng và dấu kiểm bằng của phiên đó, hoàn tác được)',()=>openLocal(x)]]).concat([
   ['Đổi tên',()=>renameLocal(x)],
@@ -1034,8 +1040,8 @@ function infoDraw(){const el=$('#info');if(!el)return;
   (t.big?'<span class="ch er btn" data-i="big">⚠ '+t.big+' cụm trên 10 mã</span>':'')+(t.err?'<span class="ch er btn" data-i="err">⚠ '+t.err+' mã không có trong file</span>':'')+(t.warn?'<span class="ch wn btn" data-i="warn">'+t.warn+' mã chờ chọn giá</span>':'')+
   (t.stale?'<span class="ch wn btn" data-i="sync">⟳ '+t.stale+' dòng khác Google Sheet · xem &amp; xác nhận</span>':'')+(t.mem?'<span class="ch">thành viên '+t.mem+' dòng</span>':'');
  el._st=t}
-$('#info').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;const k=b.dataset.i,t=$('#info')._st||{};
- if(k=='ses:new')return newLocal();if(k=='ses:ren')return sessRename();if(k.indexOf('wq:')==0)return wqAct(k);if(k.indexOf('cf:')==0)return colFilter(k.slice(3));if(k=='cfx')return clearF();if(k.indexOf('kq:')==0)return kqAct(k);if(k=='ab'){SHOWAB=!SHOWAB;LS.showab=SHOWAB?'1':'0';return draw()}if(k=='tab')return pickTab();if(k=='sync')return syncPrices();if(k=='err')return goRow(t.e1);if(k=='big')return goRow(t.b1);if(k=='warn')return goRow(t.w1)});
+$('#info').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;if(e.target.closest('input'))return;const k=b.dataset.i,t=$('#info')._st||{};
+ if(k=='ses:new')return newLocal();if(k=='ses:ren')return sessRename(b);if(k.indexOf('wq:')==0)return wqAct(k);if(k.indexOf('cf:')==0)return colFilter(k.slice(3));if(k=='cfx')return clearF();if(k.indexOf('kq:')==0)return kqAct(k);if(k=='ab'){SHOWAB=!SHOWAB;LS.showab=SHOWAB?'1':'0';return draw()}if(k=='tab')return pickTab();if(k=='sync')return syncPrices();if(k=='err')return goRow(t.e1);if(k=='big')return goRow(t.b1);if(k=='warn')return goRow(t.w1)});
 function zoomApply(){const t=$('#main table');if(t)t.style.zoom=Z[S.tab]||1}
 let UNP=(()=>{try{return JSON.parse(LS.unp||'{}')}catch(e){return{}}})();
 const TC={Sheet3:'#3b6ea8',A3:'#1d8a63',A4:'#d9780b',A6:'#8b5cc4'};
@@ -1079,7 +1085,7 @@ M.addEventListener('touchmove',e=>{if(pz&&e.touches.length==2){e.preventDefault(
 M.addEventListener('touchend',e=>{if(pz&&e.touches.length<2){pz=null;LS.z=JSON.stringify(Z);if(KP&&S.tab=='Sheet3'){KP.keep=KP.start||0;list(1)}}});
 document.addEventListener('gesturestart',e=>e.preventDefault());
 draw();load();
-if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){const V='20261124f';let fresh=true;try{fresh=LS.appv===V;if(!fresh){LS.appv=V;fresh=LS.appv!==V}}catch(e){}
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){const V='20261124h';let fresh=true;try{fresh=LS.appv===V;if(!fresh){LS.appv=V;fresh=LS.appv!==V}}catch(e){}
  if(!fresh)navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>window.caches?caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))):0).catch(()=>{}).then(()=>location.reload());
  else navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{})}
 </script></body></html>
