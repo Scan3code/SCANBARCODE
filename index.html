@@ -20,8 +20,8 @@
 <html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content">
 <title>Bảng giá A3/A4/A6</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231d6f5a'/%3E%3Ctext x='32' y='42' font-size='26' font-weight='700' text-anchor='middle' fill='white' font-family='sans-serif'%3EA3%3C/text%3E%3C/svg%3E">
-<meta name="theme-color" content="#f1f5f3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#232b28" media="(prefers-color-scheme: dark)"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" type="image/png" href="icon-192.png?v=2">
+<meta name="theme-color" content="#f1f5f3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#232b28" media="(prefers-color-scheme: dark)"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=2"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <style>
 :root{--bg:#fff;--fg:#1c1f1d;--bd:#c9d2cd;--hd:#f1f5f3;--ac:#1d6f5a;--sel:#cfe8df;--er:#fbd9d6;--wn:#fff1c2;--hz:#cdeef2;--mgf:#d9f3e4;--cx:#fdeedd;--mut:#6b7772;--acs:#e3f1ec}
 @media(prefers-color-scheme:dark){:root:not([data-theme]){--mgf:#1c4a35;--cx:#4a3112;--mut:#97a39d;--acs:#1c3a31;--hz:#1f4a52;--bg:#161a18;--fg:#e6ebe8;--bd:#46564e;--hd:#232b28;--ac:#4fb597;--sel:#244a3f;--er:#5a2623;--wn:#5a4a14}}
@@ -889,7 +889,7 @@ function insRows(sh,src){const{R,P,runs,L}=insRuns(sh),items=insItems(src),n=ite
  const lab=m=>m==1?'1 mã riêng '+s2:'ghép '+m+' mã '+s2;
  if(!L.length)return msg(sh+' chưa có dòng nào để chèn vào');
  const sk=items.map(x=>x.sku);
- pop('Chèn vào cụm ở '+sh,'<div class="ip-chips">'+sk.slice(0,6).map(x=>'<span>'+esc(x)+'</span>').join('')+(sk.length>6?'<span>+'+(sk.length-6)+'</span>':'')+'</div><input class="f" id="ir" placeholder="Tìm dòng: số dòng, SKU hoặc tên" style="width:100%;flex:none;font-size:16px;margin-bottom:6px"><div id="il" class="ip-list"></div><div id="ibt" class="ip-bt"></div>',p2=>{
+ pop('Chèn vào cụm ở '+sh,'<div class="ip-chips">'+sk.slice(0,6).map(x=>'<span>'+esc(x)+'</span>').join('')+(sk.length>6?'<span>+'+(sk.length-6)+'</span>':'')+'</div><div id="il" class="ip-list"></div><input class="f" id="ir" placeholder="Tìm dòng: số dòng, SKU hoặc tên" style="width:100%;flex:none;font-size:16px;margin-top:8px"><div id="ibt" class="ip-bt"></div>',p2=>{
   p2.querySelector('.sh').style.cssText+=';max-height:90%;display:flex;flex-direction:column;overflow:hidden';
   const il=p2.querySelector('#il'),q=p2.querySelector('#ir'),bt=p2.querySelector('#ibt');let pk=null,wh='dn',V=[];
   const lineOf=idx=>{if(idx<0)return'(đầu bảng)';if(idx>=R.length)return'(cuối bảng)';const k=P[idx]&&P[idx].abs!==undefined?P[idx].abs:idx,r=R[k];if(!r||!r.sku)return'(dòng trống)';return esc(r.sku)+' · '+esc(String(r.e&&r.e.ten||'').slice(0,34))};
@@ -904,9 +904,9 @@ function insRows(sh,src){const{R,P,runs,L}=insRuns(sh),items=insItems(src),n=ite
     bt.querySelector('#igo').onchange=e=>{GO=e.target.checked;LS.insGo=GO?'1':'0'};
     bt.querySelector('#iok').onclick=()=>{p2.style.display='none';insertAt(sh,pk,wh,GO,src)}}
    bt.querySelector('#ic').onclick=()=>p2.style.display='none'};
-  const rend=()=>{const w=norm(q.value).split(/\s+/).filter(Boolean),fl=true;V=L.filter(x=>w.every(a=>x.k.includes(a)));let lr=-1;
+  const rend=()=>{const w=norm(q.value).split(/\s+/).filter(Boolean);V=L.filter(x=>w.every(a=>x.k.includes(a)));let lr=-1;
    il.innerHTML=V.slice(0,250).map(x=>{const rn=runs[x.run];const nh=x.run!=lr,cnt=nh?V.filter(y=>y.run==x.run).length:0;lr=x.run;return(nh?(x.run>0?'<div class="ip-gap">dòng trống</div>':'')+'<div class="ip-h"'+(rn.n>10?' style="background:var(--er);color:#d32f2f;border-left-color:#e5484d"':'')+'>'+(rn.n==1?'1 mã riêng '+s2:'Cụm ghép '+rn.n+' mã '+s2)+(rn.n>10?' ⚠ quá 10 mã':'')+' <span>· dòng '+(rn.a+1)+' đến '+(rn.b+1)+(w.length?' · khớp '+cnt+' dòng':'')+'</span></div>':'')+
-    '<div class="ip-r'+(rn.n>1?' ip-m':'')+(x.i==pk?' on':'')+'" data-i="'+x.i+'"><span class="ip-n">'+(x.i+1)+'</span><div class="ip-t"><b>'+esc(x.sku)+'</b><small>'+esc(x.nm)+'</small></div>'+''+'</div>'}).join('')||'<div class="mut" style="padding:12px">Không có dòng phù hợp</div>';
+    '<div class="ip-r'+(rn.n>1?' ip-m':'')+(x.i==pk?' on':'')+'" data-i="'+x.i+'"><span class="ip-n">'+(x.i+1)+'</span><div class="ip-t"><b>'+esc(x.sku)+'</b><small>'+esc(x.nm)+'</small></div></div>'}).join('')||'<div class="mut" style="padding:12px">Không có dòng phù hợp</div>';
    if(V.length>250)il.insertAdjacentHTML('beforeend','<div class="mut" style="padding:8px;text-align:center">Còn '+(V.length-250)+' dòng nữa, gõ vào ô tìm để thu hẹp</div>');
    il.scrollTop=0;
    il.querySelectorAll('.ip-r').forEach(el=>el.onclick=()=>{pk=+el.dataset.i;il.querySelectorAll('.ip-r').forEach(e=>e.classList.toggle('on',e===el));q.blur();paintBt()})};
@@ -1067,7 +1067,7 @@ M.addEventListener('touchmove',e=>{if(pz&&e.touches.length==2){e.preventDefault(
 M.addEventListener('touchend',e=>{if(pz&&e.touches.length<2){pz=null;LS.z=JSON.stringify(Z);if(KP&&S.tab=='Sheet3'){KP.keep=KP.start||0;list(1)}}});
 document.addEventListener('gesturestart',e=>e.preventDefault());
 draw();load();
-if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){const V='20261124a';let fresh=true;try{fresh=LS.appv===V;if(!fresh){LS.appv=V;fresh=LS.appv!==V}}catch(e){}
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){const V='20261124b';let fresh=true;try{fresh=LS.appv===V;if(!fresh){LS.appv=V;fresh=LS.appv!==V}}catch(e){}
  if(!fresh)navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>window.caches?caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))):0).catch(()=>{}).then(()=>location.reload());
  else navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{})}
 </script></body></html>

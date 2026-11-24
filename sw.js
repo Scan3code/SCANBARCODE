@@ -1,6 +1,5 @@
-// Service worker: luôn ưu tiên lấy bản mới nhất từ mạng, mất mạng thì dùng bản đã lưu.
-const CACHE = 'bang-gia-20261123a';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const CACHE = 'bang-gia-20261124b';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
@@ -19,7 +18,7 @@ self.addEventListener('fetch', e => {
   const r = e.request;
   if (r.method !== 'GET') return;
   const u = new URL(r.url);
-  if (u.origin !== location.origin) return; // Google Sheet, API... để trình duyệt tự xử lý
+  if (u.origin !== location.origin) return;
   e.respondWith(
     fetch(r, { cache: 'no-store' })
       .then(res => {
