@@ -12,7 +12,7 @@
 3. Việc chạy lâu (tra web hàng loạt, ...) phải chạy NỀN và hiện tiến trình ĐAN NGAY TRONG BẢNG như Excel: trạng thái ở chính dòng đó (⏳ Đang tra… → ✍ Điền) và 1 chip ở dải thông tin trên cùng (wqChip). TUYỆT ĐỐI không dùng thanh/hộp nổi che lên dữ liệu, không dùng pop() che màn hình; người dùng vẫn thao tác tiếp được.
 4. Mọi thay đổi dữ liệu đều snap() trước để Hoàn tác được.
 5. "Thêm sang…" (mvPop/mvDo/insertAt) là SAO CHÉP mã sang tab khác, KHÔNG xóa ở tab nguồn.
-6. Tên phiên đang mở luôn hiện ở chip đầu dải thông tin (sesChip): bấm tên để chuyển phiên, ✎ để đổi tên phiên đang mở (chỉ phiên trên máy), ＋ (không kèm chữ) để tạo phiên mới. Phiên (trên máy và online) đều lưu bằng sessData() và khôi phục bằng applySess(): bảng A3/A4/A6, dấu kiểm KM/KN/KD, tab nguồn Sheet3 (LS.src) và trạng thái kiểm bảng (quầy, A3/A4/A6/Tick, trang đang lật). Thêm gì cần lưu theo phiên thì sửa 2 hàm đó. Phiên trên máy tự lưu ngầm (autoLocal) sau mỗi thay đổi; phiên online chỉ lưu khi bấm lưu. Mở phiên online thì tách khỏi phiên trên máy để không ghi đè nhầm.
+6. Tên phiên đang mở luôn hiện ở chip đầu dải thông tin (sesChip): bấm vào tên chỉ để đổi tên phiên đang mở (trên máy hoặc online); mọi thao tác khác với phiên nằm ở nút Phiên; ＋ (không kèm chữ) để tạo phiên mới. Phiên (trên máy và online) đều lưu bằng sessData() và khôi phục bằng applySess(): bảng A3/A4/A6, dấu kiểm KM/KN/KD, tab nguồn Sheet3 (LS.src) và trạng thái kiểm bảng (quầy, A3/A4/A6/Tick, trang đang lật). Thêm gì cần lưu theo phiên thì sửa 2 hàm đó. Phiên trên máy tự lưu ngầm (autoLocal) sau mỗi thay đổi; phiên online chỉ lưu khi bấm lưu. Mở phiên online thì tách khỏi phiên trên máy để không ghi đè nhầm.
 7. Dọn code: hàm/hằng/CSS không còn được gọi thì xóa, đừng để dư.
 8. Nút kính lúp (#bf) nằm ở thanh tab dưới cùng cạnh Sheet3/A3/A4/A6 cho dễ bấm; KHÔNG đặt lại ở thanh trên và không dùng nút nổi đè lên bảng.
 =================================================================
@@ -458,33 +458,33 @@ async function applySess(d){
  if('kq' in d)kqRestore(d.kq);
  SL=null;CR=null;chk.clear()}
 async function renameLocal(x){const n=prompt('Tên mới:',x.name);if(!n||!n.trim()||n.trim()==x.name)return;const nm=n.trim();try{const f=(await dbq('readonly',z=>z.get(x.id)))||x;f.name=nm;await dbq('readwrite',z=>z.put(f));x.name=nm}catch(e){return msg('Không đổi được tên: '+e)}if((JSON.parse(LS.lcur||'{}')).id==x.id)LS.lcur=JSON.stringify({id:x.id,name:nm});msg('Đã đổi tên');draw()}
-async function sessRename(){let c=null,x=null;try{c=JSON.parse(LS.lcur||'null');await flushLocal();x=c&&(await dbq('readonly',z=>z.get(c.id)))}catch(e){}if(!x)return msg('Phiên này chưa được lưu trên máy');renameLocal(x)}
+async function sessRename(){let c=null,o=null;try{c=JSON.parse(LS.lcur||'null');o=JSON.parse(LS.cur||'null')}catch(e){}
+ if(c){let x=null;try{await flushLocal();x=await dbq('readonly',z=>z.get(c.id))}catch(e){}if(!x)return msg('Phiên này chưa được lưu trên máy');return renameLocal(x)}
+ if(o){const n=prompt('Tên mới (đổi tên sẽ lưu luôn bảng hiện tại lên phiên online):',o.name);if(n&&n.trim()&&n.trim()!=o.name)saveSess(o.id,n.trim());return}
+ msg('Chưa có phiên đang mở. Bấm Phiên để tạo hoặc mở phiên')}
 function localItem(x){let c=null;try{c=JSON.parse(LS.lcur||'null')}catch(e){}const cur=c&&c.id==x.id;
  popItems(esc(x.name)+(cur?' (đang mở)':''),(cur?[]:[['Mở phiên này (thay bảng và dấu kiểm bằng của phiên đó, hoàn tác được)',()=>openLocal(x)]]).concat([
   ['Đổi tên',()=>renameLocal(x)],
   ['Xóa phiên này',async()=>{if(!confirm('Xóa phiên "'+x.name+'" khỏi máy?'))return;await dbq('readwrite',z=>z.delete(x.id));if((JSON.parse(LS.lcur||'{}')).id==x.id)delete LS.lcur;msg('Đã xóa phiên');draw()}]]))}
 async function openLocal(x){ASB=1;try{await flushLocal();const d=JSON.parse(x.data);await applySess(d);LS.lcur=JSON.stringify({id:x.id,name:x.name});delete LS.cur;save();draw();msg('Đã mở phiên "'+x.name+'"'+(d.km?' cùng dấu kiểm bảng':'')+(d.kq?' và trạng thái kiểm bảng':''))}catch(e){msg('Không mở được phiên: '+e)}finally{ASB=0;autoLocal()}}
-async function sessSwitch(){let L=[];try{L=(await dbq('readonly',x=>x.getAll()))||[]}catch(e){return msg('Máy này không cho lưu phiên: '+e)}
- L.sort((a,b)=>b.t-a.t);const cur=JSON.parse(LS.lcur||'null'),its=[['＋ Tạo phiên mới',newLocal]];
- L.forEach(x=>its.push([(cur&&cur.id==x.id?'✓ ':'')+'<b>'+esc(x.name)+'</b><br><small>'+esc(x.when)+' · '+x.n+' mã'+(cur&&cur.id==x.id?' · đang mở (bấm để đổi tên / xóa)':'')+'</small>',()=>cur&&cur.id==x.id?localItem(x):openLocal(x)]));
- its.push(['⚙ Lưu thành phiên mới · Phiên online…',localPop]);popItems('Chuyển phiên (tự lưu phiên đang mở trước khi chuyển)',its)}
 function sesChip(){let c=null,cloud=0;try{c=JSON.parse(LS.lcur||'null');if(!c){c=JSON.parse(LS.cur||'null');cloud=1}}catch(e){}
- const n=c?String(c.name||''):'';return '<span class="ch ok btn" data-i="ses:sw">'+(c?(cloud?'☁ ':'📁 ')+esc(n.length>20?n.slice(0,19)+'…':n):'📁 Chưa có phiên')+' ▾</span>'+(c&&!cloud?'<span class="ch btn" data-i="ses:ren" aria-label="Đổi tên phiên">✎</span>':'')+'<span class="ch btn" data-i="ses:new" aria-label="Tạo phiên mới">＋</span>'}
+ const n=c?String(c.name||''):'';return '<span class="ch ok btn" data-i="ses:ren">'+(c?(cloud?'☁ ':'📁 ')+esc(n.length>20?n.slice(0,19)+'…':n):'📁 Chưa có phiên')+'</span><span class="ch btn" data-i="ses:new" aria-label="Tạo phiên mới">＋</span>'}
 const snapSKU=()=>['A3','A4','A6'].flatMap(k=>S[k].filter(r=>r.sku).map(r=>k+':'+r.sku));
 function chgTxt(){const base=new Set(JSON.parse(LS.base||'[]')),now=snapSKU(),ns=new Set(now),add=now.filter(x=>!base.has(x)),rem=[...base].filter(x=>!ns.has(x)),f=a=>a.slice(0,8).join(', ')+(a.length>8?'…':'');
- return(add.length?'+'+add.length+' mã: '+f(add):'')+(add.length&&rem.length?' | ':'')+(rem.length?'−'+rem.length+' mã: '+f(rem):'')||'Không đổi mã'}
+ return(add.length?'Thêm '+add.length+' mã: '+f(add):'')+(add.length&&rem.length?' | ':'')+(rem.length?'Bớt '+rem.length+' mã: '+f(rem):'')||'Không đổi mã'}
+const vt=t=>{const d=new Date(t);return isNaN(d)?String(t||''):d.toLocaleString('vi-VN')};
 const jget=q=>fetch(API+'?'+q).then(r=>r.json()),jpost=o=>fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(o)}).then(r=>r.json());
 async function sessPop(){msg('Đang tải danh sách phiên…');let L=[];try{L=(await jget('action=list')).sessions||[]}catch(e){return msg('Chưa kết nối được sheet sao lưu')}
  const cur=JSON.parse(LS.cur||'null'),its=[['＋ Lưu thành phiên mới',saveNew]];
  if(cur)its.push(['↻ Cập nhật phiên đang mở: <b>'+esc(cur.name)+'</b>',()=>saveSess(cur.id,cur.name)]);
- L.slice().reverse().forEach(x=>its.push(['<b>'+esc(x.name)+'</b><br><small>'+esc(x.updated)+' · '+esc(x.editor)+(x.changes?'<br>'+esc(x.changes):'')+'</small>',()=>openSess(x)]));
+ L.slice().reverse().forEach(x=>its.push(['<b>'+esc(x.name)+'</b><br><small>'+esc(vt(x.updated))+' · '+esc(x.editor)+(x.changes?'<br>'+esc(x.changes):'')+'</small>',()=>openSess(x)]));
  popItems('Phiên làm việc (lưu online)',its)}
 function saveNew(){const n=prompt('Đặt tên phiên:','Phiên '+new Date().toLocaleDateString('vi-VN'));if(n&&n.trim())saveSess(null,n.trim())}
 async function saveSess(id,name,force){if(!LS.me)LS.me=(prompt('Tên của bạn (ghi vào phiên để biết ai sửa):','')||'Ẩn danh').trim();const cur=JSON.parse(LS.cur||'null');
  msg('Đang lưu phiên…');
  try{const r=await jpost({action:'save',id:id||'',name,editor:LS.me,changes:chgTxt(),baseUpdated:id&&cur&&cur.id==id?cur.updated:'',force:!!force,data:sessData()});
-  if(r.conflict){if(confirm('Phiên này vừa được '+r.editor+' sửa lúc '+r.updated+'. Ghi đè lên?'))return saveSess(id,name,true);return msg('Đã hủy lưu')}
-  if(r.error)throw r.error;LS.cur=JSON.stringify({id:r.id,name,updated:r.updated});LS.base=JSON.stringify(snapSKU());msg('Đã lưu phiên "'+name+'" lúc '+r.updated)}
+  if(r.conflict){if(confirm('Phiên này vừa được '+r.editor+' sửa lúc '+vt(r.updated)+'. Ghi đè lên?'))return saveSess(id,name,true);return msg('Đã hủy lưu')}
+  if(r.error)throw r.error;LS.cur=JSON.stringify({id:r.id,name,updated:r.updated});LS.base=JSON.stringify(snapSKU());msg('Đã lưu phiên "'+name+'" lúc '+vt(r.updated))}
  catch(e){msg('Không lưu được: '+e)}}
 function openSess(x){popItems(esc(x.name),[['Mở phiên này (thay bảng hiện tại, có thể hoàn tác)',async()=>{msg('Đang tải phiên…');
   try{const d=JSON.parse((await jget('action=get&id='+x.id)).data);ASB=1;try{await flushLocal();await applySess(d);delete LS.lcur;LS.cur=JSON.stringify({id:x.id,name:x.name,updated:x.updated});LS.base=JSON.stringify(snapSKU());save();draw();msg('Đã mở phiên "'+x.name+'"'+(d.km?' cùng dấu kiểm bảng':'')+(d.kq?' và trạng thái kiểm bảng':''))}finally{ASB=0}}catch(e){msg('Không tải được phiên')}}],
@@ -1035,7 +1035,7 @@ function infoDraw(){const el=$('#info');if(!el)return;
   (t.stale?'<span class="ch wn btn" data-i="sync">⟳ '+t.stale+' dòng khác Google Sheet · xem &amp; xác nhận</span>':'')+(t.mem?'<span class="ch">thành viên '+t.mem+' dòng</span>':'');
  el._st=t}
 $('#info').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;const k=b.dataset.i,t=$('#info')._st||{};
- if(k=='ses:sw')return sessSwitch();if(k=='ses:new')return newLocal();if(k=='ses:ren')return sessRename();if(k.indexOf('wq:')==0)return wqAct(k);if(k.indexOf('cf:')==0)return colFilter(k.slice(3));if(k=='cfx')return clearF();if(k.indexOf('kq:')==0)return kqAct(k);if(k=='ab'){SHOWAB=!SHOWAB;LS.showab=SHOWAB?'1':'0';return draw()}if(k=='tab')return pickTab();if(k=='sync')return syncPrices();if(k=='err')return goRow(t.e1);if(k=='big')return goRow(t.b1);if(k=='warn')return goRow(t.w1)});
+ if(k=='ses:new')return newLocal();if(k=='ses:ren')return sessRename();if(k.indexOf('wq:')==0)return wqAct(k);if(k.indexOf('cf:')==0)return colFilter(k.slice(3));if(k=='cfx')return clearF();if(k.indexOf('kq:')==0)return kqAct(k);if(k=='ab'){SHOWAB=!SHOWAB;LS.showab=SHOWAB?'1':'0';return draw()}if(k=='tab')return pickTab();if(k=='sync')return syncPrices();if(k=='err')return goRow(t.e1);if(k=='big')return goRow(t.b1);if(k=='warn')return goRow(t.w1)});
 function zoomApply(){const t=$('#main table');if(t)t.style.zoom=Z[S.tab]||1}
 let UNP=(()=>{try{return JSON.parse(LS.unp||'{}')}catch(e){return{}}})();
 const TC={Sheet3:'#3b6ea8',A3:'#1d8a63',A4:'#d9780b',A6:'#8b5cc4'};
@@ -1079,7 +1079,7 @@ M.addEventListener('touchmove',e=>{if(pz&&e.touches.length==2){e.preventDefault(
 M.addEventListener('touchend',e=>{if(pz&&e.touches.length<2){pz=null;LS.z=JSON.stringify(Z);if(KP&&S.tab=='Sheet3'){KP.keep=KP.start||0;list(1)}}});
 document.addEventListener('gesturestart',e=>e.preventDefault());
 draw();load();
-if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){const V='20261124e';let fresh=true;try{fresh=LS.appv===V;if(!fresh){LS.appv=V;fresh=LS.appv!==V}}catch(e){}
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){const V='20261124f';let fresh=true;try{fresh=LS.appv===V;if(!fresh){LS.appv=V;fresh=LS.appv!==V}}catch(e){}
  if(!fresh)navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>window.caches?caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))):0).catch(()=>{}).then(()=>location.reload());
  else navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{})}
 </script></body></html>
