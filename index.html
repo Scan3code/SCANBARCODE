@@ -201,9 +201,35 @@ function toks2(s,join){const t=[];let cur=null,sp=false;
  for(let i=0;i<s.length;i++){const ch=s[i];if(/\s/.test(ch)){sp=true;continue}const c=/\d/.test(ch)?'d':/[A-Za-zÀ-ỹĐđ]/.test(ch)?'l':'o';
   if(cur&&cur.c==c&&(!sp||(join&&c=='l'))){cur.e=i+1;cur.v+=ch}
   else{cur={c,s:i,e:i+1,v:ch,code:false};const p=t[t.length-1];if(p&&!sp&&c!='o'&&p.c!='o'&&p.c!=c){cur.code=true;p.code=true}t.push(cur)}sp=false}return t}
-function simOK(a,b){if(!sameT(a,b))return false;for(const join of[false,true]){const A=toks2(a,join),B=toks2(b,join);
+function simOK(a,b){if(codeSim(a,b))return true;if(!sameT(a,b))return false;for(const join of[false,true]){const A=toks2(a,join),B=toks2(b,join);
   if(A.length&&A.length==B.length&&A.every((x,i)=>x.c==B[i].c)){let d=0,lg=false;A.forEach((x,i)=>{if(norm(x.v)!=norm(B[i].v)){d++;if(x.v.length>20||B[i].v.length>20)lg=true}});const n=A.length;return!lg&&d>0&&d<=8&&(n-d)>=2&&(n-d)/n>=0.4}}return false}
-function mergeNames(ns){for(const join of[false,true]){const T=ns.map(x=>toks2(x,join)),n=T[0].length;
+/* ===== GHÉP THEO MÃ HÀNG (hỗ trợ viết tắt, không dấu, đuôi /75, hậu tố .sale) ===== */
+const ABBR=/^[A-ZĐ]{2,6}$/,CODE_RE=/([A-Za-z]{2,})(\d{3,})((?:\/\d+)*)/g;
+function parseCode(s){s=String(s||'').normalize('NFC');let m,last=null;CODE_RE.lastIndex=0;while((m=CODE_RE.exec(s)))last=m;if(!last)return null;
+ const base=last[2],nums=[base];(last[3]?last[3].slice(1).split('/'):[]).forEach(e=>nums.push(e.length>=base.length?e:base.slice(0,base.length-e.length)+e));
+ const ce=last.index+last[0].length;return{L:last[1],nums,preRaw:s.slice(0,last.index),sufRaw:s.slice(ce)}}
+const wordsOf=t=>String(t).split(/\s+/).filter(Boolean).map(o=>({o,n:norm(o)}));
+function descSame(a,b){const A=wordsOf(a),B=wordsOf(b);
+ const ini=(W,j,k)=>{if(j+k>W.length)return null;let r='';for(let x=0;x<k;x++){const c=W[j+x].n.replace(/[^a-z0-9]/g,'')[0];if(!c)return null;r+=c}return r};
+ const go=(i,j)=>{if(i==A.length&&j==B.length)return true;if(i==A.length||j==B.length)return false;
+  if(A[i].n==B[j].n&&go(i+1,j+1))return true;
+  if(ABBR.test(A[i].o)&&A[i].n!=B[j].n&&ini(B,j,A[i].n.length)==A[i].n&&go(i+1,j+A[i].n.length))return true;
+  if(ABBR.test(B[j].o)&&A[i].n!=B[j].n&&ini(A,i,B[j].n.length)==B[j].n&&go(i+B[j].n.length,j+1))return true;
+  return false};
+ return go(0,0)}
+function codeCompat(P){const L0=norm(P[0].L),S0=norm(P[0].sufRaw.trim());
+ for(let i=0;i<P.length;i++){if(norm(P[i].L)!=L0||norm(P[i].sufRaw.trim())!=S0)return false;for(let j=0;j<i;j++)if(!descSame(P[j].preRaw.trim(),P[i].preRaw.trim()))return false}return true}
+function codeSim(a,b){const A=parseCode(a),B=parseCode(b);if(!A||!B||!codeCompat([A,B]))return false;return A.nums.join()!=B.nums.join()}
+function mergeByCode(ns){const P=ns.map(parseCode);if(!P.length||P.some(p=>!p)||!codeCompat(P))return null;
+ const u=[];P.forEach(p=>p.nums.forEach(v=>{if(!u.includes(v))u.push(v)}));if(u.length<2)return null;
+ const same=u.every(v=>v.length==u[0].length&&v.length>=3);if(same)u.sort((x,y)=>+x-+y);
+ const codes=P[0].L+u[0]+u.slice(1).map(v=>'/'+(same?(v.replace(/^0+/,'')||'0'):v)).join('');
+ const sc=p=>{const t=p.preRaw,w=wordsOf(t);return(t.match(/[À-ỹĐđ]/g)||[]).length*100-w.filter(x=>ABBR.test(x.o)).length*500+w.length*10+t.length};
+ let best=P[0];P.forEach(p=>{if(sc(p)>sc(best))best=p});
+ let pre=best.preRaw;if(pre&&!/\s$/.test(pre)&&/\s$/.test(P[0].preRaw))pre+=' ';
+ return pre+codes+P[0].sufRaw}
+function mergeNames(ns){return mergeByCode(ns)||mergeNamesOld(ns)}
+function mergeNamesOld(ns){for(const join of[false,true]){const T=ns.map(x=>toks2(x,join)),n=T[0].length;
   if(!n||T.some(t=>t.length!=n||t.some((x,i)=>x.c!=T[0][i].c)))continue;
   const df=[];for(let j=0;j<n;j++)if(T.some(t=>norm(t[j].v)!=norm(T[0][j].v)))df.push(j);if(!df.length)return null;
   if(df.some(j=>T.some(t=>t[j].v.length>20)))return null;
