@@ -544,7 +544,7 @@ function revealCell(){if(!SL)return;const td=$('#main td[data-r="'+SL.r1+'"][dat
 if(window.visualViewport){const vv=visualViewport;vv.addEventListener('resize',()=>{document.body.style.height=vv.height+'px';window.scrollTo(0,0);if(ED)setTimeout(revealCell,60)});vv.addEventListener('scroll',()=>window.scrollTo(0,0))}
 function hideFM(){$('#fm').style.display='none'}
 const WQ={res:{},run:null};let XC={ok:null,t:''},XCT=0,FMK=0;
-const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);let TCH=0;document.addEventListener('touchstart',()=>{TCH=Date.now()},true);document.addEventListener('touchend',()=>{TCH=Date.now()},true);
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);let TCH=0,TDN=0;['touchstart','touchend','touchcancel'].forEach(t=>document.addEventListener(t,e=>{TCH=Date.now();TDN=e.touches.length},true));
 function sysClip(cb){const fin=()=>{cb&&cb()};if(IOS||!(navigator.clipboard&&navigator.clipboard.readText)){XC.ok=false;return fin()}
  navigator.clipboard.readText().then(t=>{XC.ok=true;XC.t=t||'';fin()}).catch(()=>{XC.ok=false;fin()})}
 function selHas(){if(!SL||S.tab=='Sheet3')return false;const R=S[S.tab];for(const i of selRows(1)){const r=R[i];if(!r)continue;for(let k=0;k<=LASTC;k++){if(!inSel(i,k))continue;const v=k==0?r.sku:(VV[i]&&VV[i][FK[k]]);if(String(v==null?'':v).trim()!=='')return true}}return false}
@@ -654,8 +654,8 @@ function mergeItems(i0){const sh=S.tab,R=S[sh],P=PL[i0]||{},out=[];if(!R[i0]||!R
  if(P.abs!==undefined)out.push(['Tách dòng này khỏi ghép',doIt(()=>{R[i0].nm=1},'Đã tách dòng')]);
  if(hasNm||runHasMerge(i0))out.push(hasNm?['Bật ghép tên lại cho cụm này',doIt(()=>{for(let x=a;x<=b;x++){delete R[x].nm;if(sh=='A6')R[x].mg6=1}},'Đã bật ghép tên cho cụm')]:['Tắt ghép tên cho cụm này',doIt(()=>{for(let x=a;x<=b;x++)R[x].nm=1},'Đã tắt ghép tên cho cụm')]);return out}
 let ASK6=0;
-let ASKT=0;function ask6Later(n){clearTimeout(ASKT);ASKT=setTimeout(()=>ask6(n||0),n?900:60)}
-function ask6(n){n=n||0;if(S.tab!='A6'||Date.now()<ASK6)return;if($('#pop').style.display=='block'||ED||Date.now()-TCH<700){if(n<8)ASKT=setTimeout(()=>ask6(n+1),900);return}const R=S.A6,cs=clusters(R,'A6',false).filter(c=>c.ix.every(k=>!R[k].mg6&&!R[k].nm));if(!cs.length)return;ASK6=Date.now()+20000;
+let ASKT=0,A6K='';function ask6Later(n){clearTimeout(ASKT);ASKT=setTimeout(()=>ask6(n||0),n?250:60)}
+function ask6(n){n=n||0;if(S.tab!='A6'||Date.now()<ASK6)return;if($('#pop').style.display=='block'||ED||TDN){if(n<40)ASKT=setTimeout(()=>ask6(n+1),250);return}const R=S.A6;if(R.filter(r=>r.sku&&r.e&&!r.tm&&!r.mg6&&!r.nm).length<2)return;const key=R.map(r=>(r.sku||'')+(r.mg6?1:0)+(r.nm?1:0)+(r.tm?1:0)+(r.e?r.e.ten+'|'+r.e.gia+'|'+r.e.goc:'')).join(',');if(key===A6K)return;A6K=key;const cs=clusters(R,'A6',false).filter(c=>c.ix.every(k=>!R[k].mg6&&!R[k].nm));if(!cs.length)return;A6K='';ASK6=Date.now()+20000;
  popItems('A6: có '+cs.length+' nhóm dòng cùng vendor, giá bán, giá gốc có thể ghép tên. Ghép không?',[['Ghép '+cs.length+' nhóm: '+cs.slice(0,3).map(c=>esc(c.name)).join(' • ')+(cs.length>3?' …':''),()=>{snap();cs.forEach(c=>c.ix.forEach(k=>R[k].mg6=1));save();draw();msg('Đã ghép tên '+cs.length+' nhóm ở A6')}],
   ['Không ghép',()=>{cs.forEach(c=>c.ix.forEach(k=>R[k].nm=1));save();draw()}],['Để sau',()=>{ASK6=Date.now()+90000}]])}
 function act(a){if(!SL)return;const sh=S.tab,R=S[sh],rows=selRows(),n=rows.length,nr=selRows(1).length,lo=rows[0],hi=rows[n-1],has=!!(CR&&clip&&CR.sh==sh);
