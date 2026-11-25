@@ -139,7 +139,7 @@ tr.r3.k6 td:nth-child(2){box-shadow:inset 5px 0 0 #7b5ea7}tr.r3.k4 td:nth-child(
 const API='https://script.google.com/macros/s/AKfycbzMixo2qTm43242LjvrH6E_ypONCjbRL-qUdmNKznr3CJut25HXcQSvMhFce4T3NSYe/exec';
 const $=s=>document.querySelector(s),LS=new Proxy(localStorage,{set(t,k,v){try{t[k]=v}catch(e){}return true}});
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
-const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').toLowerCase();
+const norm=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d');
 const isN=x=>typeof x=='number'||(x!=null&&x!==''&&/^[\d.,\s]+$/.test(String(x))&&/\d/.test(String(x)));
 const fm=v=>typeof v=='number'?Math.round(v).toLocaleString('vi-VN'):(v==null?'':v),esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 const blank=()=>({sku:'',e:null,n:'1a6',err:''}),clone=o=>JSON.parse(JSON.stringify(o));
@@ -201,17 +201,21 @@ function toks2(s,join){const t=[];let cur=null,sp=false;
  for(let i=0;i<s.length;i++){const ch=s[i];if(/\s/.test(ch)){sp=true;continue}const c=/\d/.test(ch)?'d':/[A-Za-zÀ-ỹĐđ]/.test(ch)?'l':'o';
   if(cur&&cur.c==c&&(!sp||(join&&c=='l'))){cur.e=i+1;cur.v+=ch}
   else{cur={c,s:i,e:i+1,v:ch,code:false};const p=t[t.length-1];if(p&&!sp&&c!='o'&&p.c!='o'&&p.c!=c){cur.code=true;p.code=true}t.push(cur)}sp=false}return t}
-function simOK(a,b){if(!sameT(a,b)||hasAcc(a)!=hasAcc(b))return false;for(const join of[false,true]){const A=toks2(a,join),B=toks2(b,join);
-  if(A.length&&A.length==B.length&&A.every((x,i)=>x.c==B[i].c)){let d=0,lg=false;A.forEach((x,i)=>{if(x.v.toLowerCase()!=B[i].v.toLowerCase()){d++;if(x.v.length>20||B[i].v.length>20)lg=true}});const n=A.length;return!lg&&d>0&&d<=8&&(n-d)>=2&&(n-d)/n>=0.4}}return false}
+function simOK(a,b){if(!sameT(a,b))return false;for(const join of[false,true]){const A=toks2(a,join),B=toks2(b,join);
+  if(A.length&&A.length==B.length&&A.every((x,i)=>x.c==B[i].c)){let d=0,lg=false;A.forEach((x,i)=>{if(norm(x.v)!=norm(B[i].v)){d++;if(x.v.length>20||B[i].v.length>20)lg=true}});const n=A.length;return!lg&&d>0&&d<=8&&(n-d)>=2&&(n-d)/n>=0.4}}return false}
 function mergeNames(ns){for(const join of[false,true]){const T=ns.map(x=>toks2(x,join)),n=T[0].length;
   if(!n||T.some(t=>t.length!=n||t.some((x,i)=>x.c!=T[0][i].c)))continue;
-  const df=[];for(let j=0;j<n;j++)if(T.some(t=>t[j].v.toLowerCase()!=T[0][j].v.toLowerCase()))df.push(j);if(!df.length)return null;
+  const df=[];for(let j=0;j<n;j++)if(T.some(t=>norm(t[j].v)!=norm(T[0][j].v)))df.push(j);if(!df.length)return null;
   if(df.some(j=>T.some(t=>t[j].v.length>20)))return null;
-  const use=(df.length>1&&df.every(j=>T[0][j].c=='d'))?[df[df.length-1]]:df;let out=ns[0],sh=0;
-  use.forEach(j=>{const f=T[0][j],vs=[],ct={};T.forEach(t=>{const v=t[j].v,k=v.toLowerCase();if(!(k in ct)){ct[k]=0;vs.push(v)}ct[k]++});
-   if(!f.code)vs.sort((a,b)=>ct[b.toLowerCase()]-ct[a.toLowerCase()]);
-   let txt;if(f.c=='l'&&vs.length>1&&vs.every(v=>/^[A-Z]{2,}$/.test(v))){txt=vs[0]+vs.slice(1).map(v=>{let p=0;while(p<v.length&&p<vs[0].length&&v[p]==vs[0][p])p++;return'/'+(p<v.length?v.slice(p):v)}).join('')}else txt=vs.join('/');
-   out=out.slice(0,f.s+sh)+txt+out.slice(f.e+sh);sh+=txt.length-(f.e-f.s)});return out}return null}
+  const use=(df.length>1&&df.every(j=>T[0][j].c=='d'))?[df[df.length-1]]:df,ed=new Map();
+  use.forEach(j=>{const f=T[0][j],vs=[],ct={};T.forEach(t=>{const v=t[j].v,k=norm(v);if(!(k in ct)){ct[k]=0;vs.push(v)}ct[k]++});
+   if(!f.code)vs.sort((a,b)=>ct[norm(b)]-ct[norm(a)]);
+   let txt;if(f.c=='l'&&vs.length>1&&vs.every(v=>/^[A-Z]{2,}$/.test(v))){txt=vs[0]+vs.slice(1).map(v=>{let p=0;while(p<v.length&&p<vs[0].length&&v[p]==vs[0][p])p++;return'/'+(p<v.length?v.slice(p):v)}).join('')}
+   else if(f.c=='d'&&f.code&&vs.length>1&&vs.every(v=>v.length==vs[0].length&&v.length>=3)){txt=vs[0]+vs.slice(1).map(v=>'/'+(v.replace(/^0+/,'')||'0')).join('')}
+   else txt=vs.join('/');
+   ed.set(j,txt)});
+  for(let j=0;j<n;j++){if(ed.has(j)||hasAcc(T[0][j].v))continue;const ac=T.map(t=>t[j].v).find(v=>hasAcc(v));if(ac)ed.set(j,ac)}
+  let out=ns[0],sh=0;[...ed.keys()].sort((x,y)=>x-y).forEach(j=>{const f=T[0][j],txt=ed.get(j);out=out.slice(0,f.s+sh)+txt+out.slice(f.e+sh);sh+=txt.length-(f.e-f.s)});return out}return null}
 function clusters(R,sh,flagMode){const out=[];let i=0;
  while(i<R.length){if(!R[i].sku){i++;continue}let j=i;while(j<R.length&&R[j].sku)j++;const bk=new Map();
   for(let k=i;k<j;k++){const r=R[k];if(!r.e||r.tm||r.nm)continue;if(flagMode&&sh=='A6'&&!r.mg6)continue;
