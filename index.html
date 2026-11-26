@@ -203,11 +203,14 @@ function toks2(s,join){const t=[];let cur=null,sp=false;
   else{cur={c,s:i,e:i+1,v:ch,code:false};const p=t[t.length-1];if(p&&!sp&&c!='o'&&p.c!='o'&&p.c!=c){cur.code=true;p.code=true}t.push(cur)}sp=false}return t}
 function simOK(a,b){if(codeSim(a,b))return true;if(!sameT(a,b))return false;for(const join of[false,true]){const A=toks2(a,join),B=toks2(b,join);
   if(A.length&&A.length==B.length&&A.every((x,i)=>x.c==B[i].c)){let d=0,lg=false;A.forEach((x,i)=>{if(norm(x.v)!=norm(B[i].v)){d++;if(x.v.length>20||B[i].v.length>20)lg=true}});const n=A.length;return!lg&&d>0&&d<=8&&(n-d)>=2&&(n-d)/n>=0.4}}return false}
-/* ===== GHÉP THEO MÃ HÀNG (hỗ trợ viết tắt, không dấu, đuôi /75, hậu tố .sale) ===== */
-const ABBR=/^[A-ZĐ]{2,6}$/,CODE_RE=/([A-Za-z]{2,})(\d{3,})((?:\/\d+)*)/g;
-function parseCode(s){s=String(s||'').normalize('NFC');let m,last=null;CODE_RE.lastIndex=0;while((m=CODE_RE.exec(s)))last=m;if(!last)return null;
- const base=last[2],nums=[base];(last[3]?last[3].slice(1).split('/'):[]).forEach(e=>nums.push(e.length>=base.length?e:base.slice(0,base.length-e.length)+e));
- const ce=last.index+last[0].length;return{L:last[1],nums,preRaw:s.slice(0,last.index),sufRaw:s.slice(ce)}}
+/* ===== GHÉP THEO MÃ HÀNG (viết tắt, không dấu, viết liền, đảo từ, đuôi /75, hậu tố .sale) ===== */
+const ABBR=/^[A-ZĐ]{2,6}$/,CODE_RE=/([A-Za-z]{2,})(\d{3,})((?:\/\d+)*)/g,NUM_RE=/(^|\s)(\d{3,})((?:\/\d+)*)(?=\s|$)/g;
+function parseCode(s){s=String(s||'').normalize('NFC');let m,last=null,L='',d,x,ci,ce;
+ CODE_RE.lastIndex=0;while((m=CODE_RE.exec(s)))last=m;
+ if(last){L=last[1];d=last[2];x=last[3];ci=last.index;ce=ci+last[0].length}
+ else{NUM_RE.lastIndex=0;while((m=NUM_RE.exec(s)))last=m;if(!last)return null;d=last[2];x=last[3];ci=last.index+last[1].length;ce=ci+d.length+x.length}
+ const nums=[d];(x?x.slice(1).split('/'):[]).forEach(e=>nums.push(e.length>=d.length?e:d.slice(0,d.length-e.length)+e));
+ return{L,nums,preRaw:s.slice(0,ci),sufRaw:s.slice(ce)}}
 const wordsOf=t=>String(t).split(/\s+/).filter(Boolean).map(o=>({o,n:norm(o)}));
 function descSame(a,b){const A=wordsOf(a),B=wordsOf(b);
  const ini=(W,j,k)=>{if(j+k>W.length)return null;let r='';for(let x=0;x<k;x++){const c=W[j+x].n.replace(/[^a-z0-9]/g,'')[0];if(!c)return null;r+=c}return r};
@@ -217,18 +220,48 @@ function descSame(a,b){const A=wordsOf(a),B=wordsOf(b);
   if(ABBR.test(B[j].o)&&A[i].n!=B[j].n&&ini(A,i,B[j].n.length)==B[j].n&&go(i+B[j].n.length,j+1))return true;
   return false};
  return go(0,0)}
-function codeCompat(P){const L0=norm(P[0].L),S0=norm(P[0].sufRaw.trim());
- for(let i=0;i<P.length;i++){if(norm(P[i].L)!=L0||norm(P[i].sufRaw.trim())!=S0)return false;for(let j=0;j<i;j++)if(!descSame(P[j].preRaw.trim(),P[i].preRaw.trim()))return false}return true}
-function codeSim(a,b){const A=parseCode(a),B=parseCode(b);if(!A||!B||!codeCompat([A,B]))return false;return A.nums.join()!=B.nums.join()}
-function mergeByCode(ns){const P=ns.map(parseCode);if(!P.length||P.some(p=>!p)||!codeCompat(P))return null;
+/* tách chữ viết liền (namngan -> nam ngan) dựa vào kho từ của cả file hàng */
+let VOCN=-1,VOCM=new Map();
+function vocab(){if(typeof D!=='undefined'&&D&&D.list&&D.list.length!==VOCN){VOCN=D.list.length;VOCM=new Map();D.list.forEach(e=>{const seen=new Set();norm(e&&e.ten).split(/[^a-z0-9]+/).forEach(w=>{if(w&&!seen.has(w)){seen.add(w);VOCM.set(w,(VOCM.get(w)||0)+1)}})})}return VOCM}
+function segTok(t,V,loc){const n=t.length,dp=new Array(n+1).fill(null);dp[0]={c:0,s:0,p:-1};
+ for(let i=2;i<=n;i++)for(let j=Math.max(0,i-14);j<=i-2;j++){if(!dp[j])continue;const w=t.slice(j,i),f=loc.has(w)?50:(V.get(w)||0);if(f<3)continue;const c=dp[j].c+1,sc=dp[j].s+Math.log(f);if(!dp[i]||c<dp[i].c||(c==dp[i].c&&sc>dp[i].s))dp[i]={c,s:sc,p:j}}
+ if(!dp[n]||dp[n].c<2)return null;const cuts=[];for(let i=n;i>0;i=dp[i].p)cuts.unshift(i);return cuts}
+function cleanAll(ns){const V=vocab(),loc=new Set();ns=ns.map(x=>String(x||'').normalize('NFC'));
+ ns.forEach(x=>norm(x).split(/[^a-z0-9]+/).forEach(w=>{if(w)loc.add(w)}));
+ return ns.map(x=>x.replace(/\S+/g,tok=>{if(!/^[A-Za-zÀ-ỹĐđ]{4,}$/.test(tok)||ABBR.test(tok))return tok;const t=norm(tok);
+  if(t.length>=4&&(V.get(t)||0)>=3)return tok;const lo=new Set([...loc].filter(w=>w!=t));
+  const cuts=segTok(t,V,lo);if(!cuts)return tok;let o=[],p=0;cuts.forEach(c=>{o.push(tok.slice(p,c));p=c});return o.join(' ')}))}
+/* ghép khi chỉ khác đúng 1 từ và thứ tự từ có thể đảo: vớ trung nam / vo nam ngan -> vớ trung/ngan nam */
+function bagMerge(P){const W=P.map(p=>wordsOf(p.preRaw)),cnt=W.map(w=>{const m={};w.forEach(x=>m[x.n]=(m[x.n]||0)+1);return m}),com={};
+ Object.keys(cnt[0]).forEach(k=>{const c=Math.min(...cnt.map(m=>m[k]||0));if(c)com[k]=c});
+ const nc=Object.values(com).reduce((a,b)=>a+b,0),lef=W.map(w=>{const u={};return w.filter(x=>{u[x.n]=(u[x.n]||0)+1;return u[x.n]>(com[x.n]||0)})}),d=lef[0].length;
+ if(lef.some(l=>l.length!=d)||d>1||(d&&nc<2)||(!d&&nc<1))return null;
+ const best={};W.forEach(w=>w.forEach(x=>{if(!best[x.n]||(!/[À-ỹĐđ]/.test(best[x.n])&&/[À-ỹĐđ]/.test(x.o)))best[x.n]=x.o}));
+ const out=[];W[0].forEach(x=>{if(lef[0].includes(x)){const vs=[];lef.forEach(l=>{if(!vs.some(v=>norm(v)==l[0].n))vs.push(l[0].o)});out.push(vs.join('/'))}else out.push(best[x.n])});
+ return out.length?out.join(' ')+' ':''}
+/* cụm từ đi liền như 1 khối khi ghép: ngắn tay, sát nách... (thêm/bớt tùy ý) */
+const PHRASES=new Set(['ngan tay','dai tay','sat nach','tay ngan','tay dai','tay lo','coc tay','ba lo','hai day','mot day','co tron','co tim','co tru','co be','co duc','co vuong','co chu v','tay phong','tay con','tay raglan']);
+function atoms(ws){const o=[];for(let i=0;i<ws.length;){let k=0;for(const L of[3,2]){if(i+L<=ws.length&&PHRASES.has(ws.slice(i,i+L).map(x=>x.n).join(' '))){k=L;break}}
+ if(k){const g=ws.slice(i,i+k);o.push({o:g.map(x=>x.o).join(' '),n:g.map(x=>x.n).join(' ')});i+=k}else{o.push(ws[i]);i++}}return o}
+/* ghép theo vị trí, khối cụm từ đi liền: quần dài ngắn tay / quần ngắn sát nách -> quần dài/ngắn ngắn tay/sát nách */
+function slotMerge(P){const A=P.map(p=>atoms(wordsOf(p.preRaw))),n=A[0].length;if(!n||A.some(a=>a.length!=n))return null;
+ let com=0,dif=0;const out=[];
+ for(let j=0;j<n;j++){const vs=[];A.forEach(a=>{if(!vs.some(v=>v.n==a[j].n))vs.push(a[j])});
+  if(vs.length==1){com++;const ac=A.map(a=>a[j].o).find(x=>/[À-ỹĐđ]/.test(x));out.push(ac||A[0][j].o)}else{dif++;out.push(vs.map(v=>v.o).join('/'))}}
+ if(com<2||dif<1||dif>com)return null;return out.join(' ')+' '}
+function mergeByCode(ns){const P=ns.map(parseCode);if(!P.length||P.some(p=>!p))return null;
+ const L0=norm(P[0].L),S0=norm(P[0].sufRaw.trim());if(P.some(p=>norm(p.L)!=L0||norm(p.sufRaw.trim())!=S0))return null;
  const u=[];P.forEach(p=>p.nums.forEach(v=>{if(!u.includes(v))u.push(v)}));if(u.length<2)return null;
- const same=u.every(v=>v.length==u[0].length&&v.length>=3);if(same)u.sort((x,y)=>+x-+y);
+ const same=u.every(v=>v.length==u[0].length&&v.length>=3);
  const codes=P[0].L+u[0]+u.slice(1).map(v=>'/'+(same?(v.replace(/^0+/,'')||'0'):v)).join('');
- const sc=p=>{const t=p.preRaw,w=wordsOf(t);return(t.match(/[À-ỹĐđ]/g)||[]).length*100-w.filter(x=>ABBR.test(x.o)).length*500+w.length*10+t.length};
- let best=P[0];P.forEach(p=>{if(sc(p)>sc(best))best=p});
- let pre=best.preRaw;if(pre&&!/\s$/.test(pre)&&/\s$/.test(P[0].preRaw))pre+=' ';
+ let pre;
+ if(P.every((p,i)=>P.slice(0,i).every(q=>descSame(q.preRaw.trim(),p.preRaw.trim())))){
+  const sc=p=>{const t=p.preRaw,w=wordsOf(t);return(t.match(/[À-ỹĐđ]/g)||[]).length*100-w.filter(x=>ABBR.test(x.o)).length*500+w.length*10+t.length};
+  let best=P[0];P.forEach(p=>{if(sc(p)>sc(best))best=p});pre=best.preRaw;if(pre&&!/\s$/.test(pre)&&/\s$/.test(P[0].preRaw))pre+=' '}
+ else{pre=bagMerge(P);if(pre==null)pre=slotMerge(P);if(pre==null)return null}
  return pre+codes+P[0].sufRaw}
-function mergeNames(ns){return mergeByCode(ns)||mergeNamesOld(ns)}
+function codeSim(a,b){if(mergeByCode([a,b]))return true;const c=cleanAll([a,b]);return(c[0]!=String(a).normalize('NFC')||c[1]!=String(b).normalize('NFC'))&&!!mergeByCode(c)}
+function mergeNames(ns){let r=mergeByCode(ns);if(r)return r;const c=cleanAll(ns);if(c.some((x,i)=>x!=String(ns[i]).normalize('NFC'))){r=mergeByCode(c);if(r)return r}return mergeNamesOld(ns)}
 function mergeNamesOld(ns){for(const join of[false,true]){const T=ns.map(x=>toks2(x,join)),n=T[0].length;
   if(!n||T.some(t=>t.length!=n||t.some((x,i)=>x.c!=T[0][i].c)))continue;
   const df=[];for(let j=0;j<n;j++)if(T.some(t=>norm(t[j].v)!=norm(T[0][j].v)))df.push(j);if(!df.length)return null;
@@ -388,11 +421,16 @@ function fitCols(rows,caps,mins){const w={};
 function aRows(sh){const C=STY[sh],R=S[sh],V=mkVal(sh),merges=[];let last=-1;R.forEach((r,i)=>{if(r.sku)last=i});
  const rows=[{r:1,c:Object.entries(C.h).map(([l,h])=>[LT.indexOf(l)+1,h[1],sx(h[0])])}];
  let rc=2,rs=0,re=0;const close=()=>{if(rs&&re>rs)merges.push('M'+rs+':M'+re);rs=0;re=0};
- for(let i=0;i<=last;i++){const r=R[i],e=r.e;if(PL[i]&&PL[i].abs!==undefined)continue;const rn=rc++,cells=[];
+ for(let i=0;i<=last;i++){if(PL[i]&&PL[i].abs!==undefined)continue;
+  let list=[[i,V[i].ten,V[i].g]];
+  if(sh=='A6'&&R[i].sku&&PL[i]&&PL[i].name){const mb=[i];for(let k=i+1;k<R.length;k++)if(PL[k]&&PL[k].abs===i)mb.push(k);
+   const gg=String(V[i].g==null?'':V[i].g).trim(),m=gg.match(/^(\d+)\s*a6$/i),N=m?Math.max(1,+m[1]):mb.length,cnt=Math.min(N,mb.length),bs=Math.floor(N/cnt),ex=N%cnt;
+   list=mb.slice(0,cnt).map((k,x)=>[k,V[i].ten,m?(bs+(x<ex?1:0))+'a6':((!gg||k!=i)?'1a6':gg)])}
+  list.forEach(([k,tn,gn])=>{const r=R[k],e=r.e;const rn=rc++,cells=[];
   if(!r.sku){close();Object.keys(C.b).forEach(l=>cells.push([LT.indexOf(l)+1,null,sx(C.b[l])]))}
-  else{if(!rs)rs=rn;re=rn;const num=x=>(x===''||x==null||isNaN(+x))?0:+x,v={A:5,B:/^\d+$/.test(r.sku)?+r.sku:r.sku,C:e?e.nh||'':null,D:e?V[i].ten:(r.err||null),E:null,F:e?e.dvt:null,G:e?num(e.gia):null,H:e?0:null,I:e?num(e.goc):null,J:e?0:null,K:e?(e.qt||0):null,L:e?e.ad:null,M:V[i].g};
+  else{if(!rs)rs=rn;re=rn;const num=x=>(x===''||x==null||isNaN(+x))?0:+x,v={A:5,B:/^\d+$/.test(r.sku)?+r.sku:r.sku,C:e?e.nh||'':null,D:e?tn:(r.err||null),E:null,F:e?e.dvt:null,G:e?num(e.gia):null,H:e?0:null,I:e?num(e.goc):null,J:e?0:null,K:e?(e.qt||0):null,L:e?e.ad:null,M:gn};
    Object.keys(C.d).forEach(l=>{if(v[l]===undefined&&l!='E'&&l!='N')return;cells.push([LT.indexOf(l)+1,v[l],sx(l=='M'&&sh!='A6'?alI(C.d[l]):fmI(e,l,hlI(r,l,C.d[l])))])})}
-  rows.push({r:rn,ht:C.ht,c:cells})}
+  rows.push({r:rn,ht:C.ht,c:cells})})}
  close();return{cols:fitCols(rows,{2:14,3:30,4:80,6:10,11:50,12:45,13:18},{1:4,2:10,3:8,4:12,5:8,6:8,7:11,8:6,9:11,10:6,11:8,12:10,13:10}),rows,merges:sh=='A6'?[]:merges}}
 function buildXlsx(){XP=STY.P.slice();HLC={};ALC={};FC={};SM=new Map();SL2=[];SC=0;
  const names=['Sheet3','A3','A4','A6'],data=[sheet3Rows(),aRows('A3'),aRows('A4'),aRows('A6')],sheets=data.map((d,i)=>sheetXml(d.cols,d.rows,i==0,d.merges)),now=new Date().toISOString().replace(/\.\d+Z$/,'Z'),n=names.length;
