@@ -60,7 +60,7 @@ td.rs,th.rs{background:var(--ac)!important;color:#fff}
 #act{display:none;border-top:1px solid var(--bd);padding:4px;gap:4px;background:var(--hd)}
 #act button{flex:1;padding:9px 0;font-size:12px;min-width:0}#act [data-a=dr],#act [data-a=cl]{flex:1.6}
 #eb{display:none;gap:5px;padding:5px;border-top:1px solid var(--bd);align-items:center;background:var(--hd)}#eb span{font-size:12px;max-width:84px;overflow:hidden;white-space:nowrap}
-.hd{display:none;position:fixed;z-index:12;width:24px;height:24px;touch-action:none}.hd::after{content:'';position:absolute;left:50%;top:50%;width:14px;height:14px;box-sizing:border-box;transform:translate(-50%,-50%);border-radius:50%;background:rgba(29,111,90,.05);border:1px solid rgba(29,111,90,.6)}.hd::before{content:'';position:absolute;left:50%;top:50%;width:3px;height:3px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(29,111,90,.5);z-index:1}
+.hd{display:none;position:fixed;z-index:12;width:36px;height:36px;touch-action:none;-webkit-user-drag:none;-webkit-tap-highlight-color:transparent;cursor:grab}.hd::after{content:'';position:absolute;left:50%;top:50%;width:14px;height:14px;box-sizing:border-box;transform:translate(-50%,-50%);border-radius:50%;background:rgba(29,111,90,.05);border:1px solid rgba(29,111,90,.6)}.hd::before{content:'';position:absolute;left:50%;top:50%;width:3px;height:3px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(29,111,90,.5);z-index:1}
 #ants.cut{--ac:#d9780b;animation-duration:1.4s}td.cx{color:var(--mut)!important;background:var(--cx)!important;font-style:italic}
 #ants{display:none;position:fixed;z-index:11;pointer-events:none;background:linear-gradient(90deg,var(--ac) 50%,transparent 0) 0 0/10px 2px repeat-x,linear-gradient(90deg,var(--ac) 50%,transparent 0) 0 100%/10px 2px repeat-x,linear-gradient(0deg,var(--ac) 50%,transparent 0) 0 0/2px 10px repeat-y,linear-gradient(0deg,var(--ac) 50%,transparent 0) 100% 0/2px 10px repeat-y;animation:ants .6s linear infinite}
 @keyframes ants{to{background-position:10px 0,-10px 100%,0 -10px,100% 10px}}
@@ -498,7 +498,7 @@ function buildXlsx(){XP=STY.P.slice();HLC={};ALC={};FC={};SM=new Map();SL2=[];SC
    {n:'docProps/core.xml',d:XH+'<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:creator>Bảng giá</dc:creator><cp:lastModifiedBy>Bảng giá</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">'+now+'</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">'+now+'</dcterms:modified></cp:coreProperties>'},
    {n:'docProps/app.xml',d:XH+'<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>Microsoft Excel</Application><DocSecurity>0</DocSecurity><ScaleCrop>false</ScaleCrop><HeadingPairs><vt:vector size="2" baseType="variant"><vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant><vt:variant><vt:i4>'+n+'</vt:i4></vt:variant></vt:vector></HeadingPairs><TitlesOfParts><vt:vector size="'+n+'" baseType="lpstr">'+names.map(x=>'<vt:lpstr>'+x+'</vt:lpstr>').join('')+'</vt:vector></TitlesOfParts><Company></Company><LinksUpToDate>false</LinksUpToDate><SharedDoc>false</SharedDoc><HyperlinksChanged>false</HyperlinksChanged><AppVersion>12.0000</AppVersion></Properties>'}]);
  return zip(files)}
-function xlName(){const d=new Date(),p=n=>String(n).padStart(2,'0');return'BangGia_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())+'.xlsx'}
+function xlName(){let c=null;try{c=JSON.parse(LS.lcur||'null')||JSON.parse(LS.cur||'null')}catch(e){}const sn=c?String(c.name||'').replace(/[\\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim():'';if(sn)return sn+'.xlsx';const d=new Date(),p=n=>String(n).padStart(2,'0');return'BangGia_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())+'.xlsx'}
 let PVT='A3';
 let PVZ=1;
 function pvHtml(nm){XP=STY.P.slice();HLC={};ALC={};FC={};const s3=nm=='Sheet3',d=s3?sheet3Rows():aRows(nm),rows=s3?d.rows.slice(0,160):d.rows,mg={};
@@ -670,12 +670,13 @@ function ants(){const an=$('#ants');
 function hdrH(){const th=$('#main th');return th?th.getBoundingClientRect().height:34}
 function hpoint(r,c,corner,m,hh,fr){let td=$('#main td[data-r="'+r+'"][data-c="'+c+'"]');if(!td){const q=[...document.querySelectorAll('#main td[data-r="'+r+'"][data-c]')];td=q[q.length-1]}if(!td)return null;
  const q=td.getBoundingClientRect(),tl=corner=='tl';let x=tl?q.left:q.right,y=tl?q.top:(td.rowSpan>1&&td.parentNode?td.parentNode.getBoundingClientRect().bottom:q.bottom),pin=false;
- const T=m.top+hh+26,B=m.bottom-34,Lx=m.left+34,Rx=m.right-34;
- if(fr)x=(m.left+m.right)/2;else if(x<Lx){x=Lx;pin=true}else if(x>Rx){x=Rx;pin=true}
- if(y<T){y=T;pin=true}else if(y>B){y=B;pin=true}return{x,y,pin}}
+ const th0=$('#main th'),f0=$('#main td[data-c="0"]'),c0=td.dataset.c===undefined||+td.dataset.c===0,gw=Math.max(th0?th0.getBoundingClientRect().width:0,(!c0&&f0)?f0.getBoundingClientRect().right-m.left:0),L0=m.left+gw,T0=m.top+hh,E=14;
+ if(fr)x=(m.left+m.right)/2;else{if(x<L0-1){x=L0+E;pin=true}else if(x>m.right+1){x=m.right-E;pin=true}else x=Math.min(x,m.right-E)}
+ if(y<T0-1){y=T0+E;pin=true}else if(y>m.bottom+1){y=m.bottom-E;pin=true}else y=Math.min(y,m.bottom-E);
+ return{x,y,pin}}
 function handles(){ants();const h1=$('#h1'),h2=$('#h2');if(!SL||S.tab=='Sheet3'||ED||multi){h1.style.display=h2.style.display='none';return}
  const m=M.getBoundingClientRect(),hh=hdrH(),fr=SL.c1==0&&SL.c2==LASTC;
- [[h1,SL.r1,SL.c1,'tl'],[h2,SL.r2,SL.c2,'br']].forEach(([h,r,c,k])=>{const p=hpoint(r,c,k,m,hh,fr);if(!p){h.style.display='none';return}h.style.display='block';h.style.left=(p.x-12)+'px';h.style.top=(p.y-12)+'px';h.classList.toggle('pin',p.pin)})}
+ [[h1,SL.r1,SL.c1,'tl'],[h2,SL.r2,SL.c2,'br']].forEach(([h,r,c,k])=>{const p=hpoint(r,c,k,m,hh,fr);if(!p){h.style.display='none';return}h.style.display='block';h.style.left=(p.x-18)+'px';h.style.top=(p.y-18)+'px';h.classList.toggle('pin',p.pin)})}
 function revealCell(){if(!SL)return;const td=$('#main td[data-r="'+SL.r1+'"][data-c="'+SL.c1+'"]');if(!td)return;const m=M.getBoundingClientRect(),r=td.getBoundingClientRect(),top=m.top+36,bot=m.bottom-8;if(r.top<top)M.scrollTop-=top-r.top;else if(r.bottom>bot)M.scrollTop+=r.bottom-bot}
 if(window.visualViewport){const vv=visualViewport;vv.addEventListener('resize',()=>{document.body.style.height=vv.height+'px';window.scrollTo(0,0);if(ED)setTimeout(revealCell,60)});vv.addEventListener('scroll',()=>window.scrollTo(0,0))}
 function hideFM(){$('#fm').style.display='none'}
@@ -704,12 +705,12 @@ function showFM(el,again){const f=$('#fm');if(!SL||S.tab=='Sheet3')return hideFM
  if(!again&&Date.now()-XCT>1200){XCT=Date.now();const tk=++FMK,k0=XC.ok+'|'+XC.t; 
   sysClip(()=>{if(tk===FMK&&SL&&k0!==XC.ok+'|'+XC.t)showFM(el,1)})}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&XC.ok===true)sysClip()});window.addEventListener('focus',()=>{if(XC.ok===true)sysClip()});
-document.addEventListener('touchstart',e=>{const f=$('#fm');if(f.style.display=='flex'&&!f.contains(e.target)&&!e.target.classList.contains('hd'))hideFM()},true);
-['h1','h2'].forEach(id=>{const h=$('#'+id);h.addEventListener('touchstart',e=>{e.preventDefault();hideFM();if(!SL)return;
+['touchstart','mousedown'].forEach(ev0=>document.addEventListener(ev0,e=>{const f=$('#fm');if(f.style.display=='flex'&&!f.contains(e.target)&&!e.target.classList.contains('hd'))hideFM()},true));
+['h1','h2'].forEach(id=>{const h=$('#'+id);h.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});h.addEventListener('pointerdown',e=>{if(e.pointerType=='mouse'&&e.button!==0)return;e.preventDefault();hideFM();if(!SL)return;const pid=e.pointerId;
  const top=id=='h1',fr=SL.c1==0&&SL.c2==LASTC,fc=SL.r1==0&&SL.r2==S[S.tab].length-1&&SL.c1==SL.c2,anc={r:top?SL.r1:SL.r2,c:top?SL.c1:SL.c2},m0=M.getBoundingClientRect(),hh=hdrH();
  const ct=$('#main td[data-r="'+anc.r+'"][data-c="'+anc.c+'"]'),q=ct?ct.getBoundingClientRect():null,qx=q?(top?q.left:q.right):0,qy=q?(top?q.top:(ct.rowSpan>1&&ct.parentNode?ct.parentNode.getBoundingClientRect().bottom:q.bottom)):0;
  const pT=!!q&&qy<m0.top+hh,pB=!!q&&qy>m0.bottom,pL=!!q&&qx<m0.left,pR=!!q&&qx>m0.right;
- let fx=e.touches[0].clientX,fy=e.touches[0].clientY,moved=0,drag=true;const x0=fx,y0=fy;$('#h1').style.pointerEvents=$('#h2').style.pointerEvents='none';
+ let fx=e.clientX,fy=e.clientY,moved=0,drag=true;const x0=fx,y0=fy;$('#h1').style.pointerEvents=$('#h2').style.pointerEvents='none';
  const apply=()=>{if(!SL)return;const m=M.getBoundingClientRect(),px=Math.min(Math.max(fx+(top?6:-6),m.left+3),m.right-3),py=Math.min(Math.max(fy+(top?6:-6),m.top+hh+3),m.bottom-3),el=document.elementFromPoint(px,py),td=el&&el.closest('#main td[data-r]');if(!td)return;
   let nr=+td.dataset.r,nc=td.dataset.c===undefined?(top?SL.c1:SL.c2):+td.dataset.c;const zT=m.top+hh+60,zB=m.bottom-60,zL=m.left+200,zR=m.right-60;
   if(pT&&fy<zT)nr=Math.min(anc.r,nr);if(pB&&fy>zB)nr=Math.max(anc.r,nr);if(pL&&fx<zL)nc=Math.min(anc.c,nc);if(pR&&fx>zR)nc=Math.max(anc.c,nc);
@@ -718,9 +719,9 @@ document.addEventListener('touchstart',e=>{const f=$('#fm');if(f.style.display==
    if(fy<m.top+hh+60)dy=-Math.ceil((m.top+hh+60-fy)/4);else if(fy>m.bottom-60)dy=Math.ceil((fy-(m.bottom-60))/4);
    if(fx<m.left+200&&M.scrollLeft>0)dx=-Math.ceil((m.left+200-fx)/6);else if(fx>m.right-60)dx=Math.ceil((fx-(m.right-60))/4);
    dy=Math.max(-18,Math.min(18,dy));dx=Math.max(-26,Math.min(26,dx));if(dy)M.scrollTop+=dy;if(dx)M.scrollLeft+=dx;apply()}requestAnimationFrame(tick)};
- const mv=ev=>{ev.preventDefault();const t=ev.touches[0];fx=t.clientX;fy=t.clientY;if(Math.abs(fx-x0)+Math.abs(fy-y0)>8)moved=1;if(moved)apply()};
- const en=()=>{drag=false;document.removeEventListener('touchmove',mv);document.removeEventListener('touchend',en);document.removeEventListener('touchcancel',en);$('#h1').style.pointerEvents=$('#h2').style.pointerEvents='';handles();if(!moved||rangeSel())showFM(h)};
- document.addEventListener('touchmove',mv,{passive:false});document.addEventListener('touchend',en);document.addEventListener('touchcancel',en);requestAnimationFrame(tick)},{passive:false})});
+ const mv=ev=>{if(ev.pointerId!==pid)return;ev.preventDefault();fx=ev.clientX;fy=ev.clientY;if(Math.abs(fx-x0)+Math.abs(fy-y0)>8)moved=1;if(moved)apply()};
+ const en=ev=>{if(ev&&ev.pointerId!==undefined&&ev.pointerId!==pid)return;drag=false;document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',en);document.removeEventListener('pointercancel',en);if(moved){const sw=x=>{x.stopPropagation();x.preventDefault()};window.addEventListener('click',sw,true);setTimeout(()=>window.removeEventListener('click',sw,true),80)};$('#h1').style.pointerEvents=$('#h2').style.pointerEvents='';handles();if(!moved||rangeSel())showFM(h)};
+ document.addEventListener('pointermove',mv,{passive:false});document.addEventListener('pointerup',en);document.addEventListener('pointercancel',en);requestAnimationFrame(tick)})});
 M.addEventListener('contextmenu',e=>{if(S.tab=='Sheet3')return;const td=e.target.closest('td[data-r][data-c]');if(!td)return;e.preventDefault();const r=+td.dataset.r,c=+td.dataset.c;
  if(!inSel(r,c))pick(r,c,r,c);showFM(multi?null:td)});
 let LPT=0,LPF=0;const lpOff=()=>{clearTimeout(LPT);LPT=0};
@@ -758,6 +759,32 @@ async function wbRun(only,shArg){if(WQ.run&&!WQ.run.fin)return msg('Đang tra n�
  let nx=0;const one=async w=>{await sleep(400*w);while(nx<codes.length&&!run.stop){const c=codes[nx++],r=await wbGet(c);
    WQ.res[c]=r;run.done++;delete run.pend[c];if(r.success)run.ok++;else{run.bad++;run.failed.push(c)}if(WQ.run===run)wqRefresh();await sleep(250)}};
  await Promise.all([one(0),one(1)]);run.fin=1;run.pend={};if(WQ.run===run)wqRefresh();try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}}
+
+/* ===== Tra web đối chiếu: mã ĐÃ có ở Sheet3 -> so giá web với giá đang ở A3/A4/A6, lệch thì điền ===== */
+const numOf=v=>typeof v=='number'?v:(parseFloat(String(v==null?'':v).replace(/\D/g,''))||0);
+function wcRows(){const R=S[S.tab]||[],o=[];if(S.tab=='Sheet3'||!SL)return o;selRows(1).forEach(i=>{const r=R[i];if(r&&r.sku&&!r.err&&r.e&&skuKey(r).length>=4)o.push(i)});return o}
+function wcCmp(row,r){const e=row.e||{},sg=numOf(e.gia),sc=numOf(e.goc),wk=numOf(r.giaKM),wg=numOf(r.giaBan),wa=parseAd(r.dateRange),sa=parseAd(e.ad);
+ return{sg,sc,wk,wg,km:sg!==wk,gc:wg>0&&sc>0&&sc!==wg,dt:!!(wk>0&&wa&&sa&&(wa[0]!==sa[0]||wa[1]!==sa[1]))}}
+function wcApply(row,r){const wk=numOf(r.giaKM),wg=numOf(r.giaBan),e=Object.assign({},row.e,{id:-1,gia:wk>0?wk:'',goc:wg||wk||row.e.goc,ad:wk>0?String(r.dateRange||row.e.ad||''):'',dp:null,fm:null});
+ ['ws','we','mg','gv','src'].forEach(k=>delete e[k]);row.e=e;row.wl=1;row.warn=0;row.err=''}
+function wcFill(idx,sh){const R=S[sh]||[];let n=0;snap();idx.forEach(i=>{const row=R[i],r=row&&WQ.res[skuKey(row)];if(row&&r&&r.success){wcApply(row,r);n++}});save();draw();msg(n?'Đã điền '+n+' dòng từ web, hoàn tác được':'Không có dòng nào để điền')}
+async function wcRun(){const sh=S.tab,R=S[sh],idx=wcRows();if(!idx.length)return msg('Chọn dòng có mã đã có trong Sheet3 để tra đối chiếu');
+ if(!/^https:\/\/script\.google\.com\//.test(WEB_SCFP))return msg('Chưa điền link web SCFP vào hằng WEB_SCFP');
+ const codes=[...new Set(idx.map(i=>skuKey(R[i])))];let done=0,nx=0;
+ pop('🌐 Tra web đối chiếu giá','<div id="wc_b"><div style="height:8px;background:var(--hd);border:1px solid var(--bd);border-radius:99px;overflow:hidden;margin:10px 0 6px"><i id="wc_p" style="display:block;height:100%;width:0;background:var(--ac);transition:width .3s"></i></div><div class="mut" id="wc_t">Đang tra 0/'+codes.length+'…</div></div>',p=>{});
+ const live=()=>$('#pop').style.display=='block'&&$('#wc_b'),upd=()=>{if(!live())return;$('#wc_p').style.width=Math.round(done/codes.length*100)+'%';$('#wc_t').textContent='Đang tra '+done+'/'+codes.length+'…'};
+ const one=async w=>{await sleep(400*w);while(nx<codes.length){const c=codes[nx++];WQ.res[c]=await wbGet(c);done++;upd();await sleep(200)}};
+ await Promise.all([one(0),one(1)]);if(!live())return;
+ const money=v=>v>0?fm(v):'—',line=(lb,a,b,bad)=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;font-size:13.5px"><span style="color:var(--mut)">'+lb+'</span><span>Sheet <b>'+a+'</b> · Web <b style="color:'+(bad?'#b3261e':'inherit')+'">'+b+'</b></span></div>';
+ const bad=[];const cards=idx.map(i=>{const row=R[i],r=WQ.res[skuKey(row)],hd='<b>'+esc(row.sku)+'</b> <small style="color:var(--mut)">dòng '+(i+1)+' · '+esc(String(row.e&&row.e.ten||'').slice(0,34))+'</small>';
+  if(!r||!r.success)return'<div style="border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin:6px 0">'+hd+'<div style="color:#b3261e;font-size:13px;margin-top:3px">❌ '+esc((r&&r.message)||'Không tra được')+'</div></div>';
+  const c=wcCmp(row,r),b=c.km||c.gc;if(b)bad.push(i);
+  return'<div style="border:1px solid '+(b?'#b3261e':'var(--bd)')+';border-radius:10px;padding:8px 10px;margin:6px 0">'+hd+' <span style="font-size:12px;font-weight:700;color:'+(b?'#b3261e':'#1d8a63')+'">'+(b?'⚠ LỆCH':'✓ khớp')+'</span>'+
+   line('Giá KM',money(c.sg),money(c.wk),c.km)+line('Giá gốc',money(c.sc),money(c.wg),c.gc)+(r.dateRange?line('Thời hạn',esc(String(row.e&&row.e.ad||'—').replace(/Từ\s*/i,'').replace(/\s*đến\s*/i,'–')),esc(String(r.dateRange).replace(/Từ\s*/i,'').replace(/\s*đến\s*/i,'–')),c.dt):'')+
+   (b?'<button class="pri wcf" data-i="'+i+'" style="width:100%;margin-top:6px;padding:9px">✍ Điền thông tin web vào dòng '+(i+1)+'</button>':'')+'</div>'}).join('');
+ $('#wc_b').innerHTML='<div class="mut" style="margin:6px 0">'+(bad.length?'<b style="color:#b3261e">'+bad.length+'/'+idx.length+' dòng lệch giá</b> so với web':'Tất cả '+idx.length+' dòng khớp giá web')+'</div><div style="max-height:52vh;overflow:auto">'+cards+'</div><div class="cvf">'+(bad.length?'<button class="pri" id="wc_all">✍ Điền '+bad.length+' dòng lệch</button>':'')+'<button id="wc_x">Đóng</button></div>';
+ $('#wc_x').onclick=()=>$('#pop').style.display='none';const fa=$('#wc_all');if(fa)fa.onclick=()=>{$('#pop').style.display='none';wcFill(bad,sh)};
+ document.querySelectorAll('#wc_b .wcf').forEach(b=>b.onclick=()=>{wcFill([+b.dataset.i],sh);b.disabled=true;b.textContent='✓ Đã điền'})}
 function wbFill(sh,idxs){const R=S[sh]||[],list=[];(idxs||R.map((_,i)=>i)).forEach(i=>{const row=R[i],r=row&&row.sku&&WQ.res[skuKey(row)];if(row&&row.err&&r&&r.success)list.push([row,r])});
  if(!list.length){msg('Không có dòng lỗi nào đã tra để điền');return 0}snap();list.forEach(([row,r])=>wbApply(r,row));save();draw();msg('Đã điền '+list.length+' dòng, hoàn tác được');return list.length}
 
@@ -801,7 +828,7 @@ function act(a){if(!SL)return;const sh=S.tab,R=S[sh],rows=selRows(),n=rows.lengt
  if(a=='wb')return wbRun();
  if(a=='wf')return void wbFill(sh,wbRows());
  if(a=='um'){const it=mergeItems(SL.r1).filter(x=>/^(Gỡ|Tách)/.test(x[0]));if(!it.length)return;return it.length==1?it[0][1]():popItems('Tách tên ghép',it)}
- if(a=='more')return popItems('Thêm',[['Sửa ô đầu',()=>openEdit(SL.r1,SL.c1)]].concat(SL.r2>SL.r1?[['Điền xuống từ dòng đầu',()=>act('fd')]]:[]).concat(mergeItems(SL.r1)).concat(waveItems(SL.r1)).concat([['Đặt lại độ rộng các cột (hoặc chạm đúp vạch kéo ở tiêu đề cột)',()=>{delete CWS[S.tab];LS.cws=JSON.stringify(CWS);draw()}]]).concat(PL&&PL.some(p=>p&&p.name)?[['Giới hạn ký tự của 1 tên ghép: '+MAXL()+' (bấm để đổi)',()=>{const v=prompt('Giới hạn số ký tự cho 1 tên ghép (từ 20 trở lên):',MAXL());if(v&&+v>=20){LS.maxLen=String(Math.round(+v));draw();msg('Giới hạn tên ghép: '+LS.maxLen+' ký tự')}}]]:[]).concat([['Bỏ chọn',()=>act('x')]]));
+ if(a=='more')return popItems('Thêm',[['Sửa ô đầu',()=>openEdit(SL.r1,SL.c1)]].concat(SL.r2>SL.r1?[['Điền xuống từ dòng đầu',()=>act('fd')]]:[]).concat(mergeItems(SL.r1)).concat(waveItems(SL.r1)).concat(wcRows().length?[['🌐 Tra web đối chiếu giá ('+wcRows().length+' mã)',()=>wcRun()]]:[]).concat([['Đặt lại độ rộng các cột (hoặc chạm đúp vạch kéo ở tiêu đề cột)',()=>{delete CWS[S.tab];LS.cws=JSON.stringify(CWS);draw()}]]).concat(PL&&PL.some(p=>p&&p.name)?[['Giới hạn ký tự của 1 tên ghép: '+MAXL()+' (bấm để đổi)',()=>{const v=prompt('Giới hạn số ký tự cho 1 tên ghép (từ 20 trở lên):',MAXL());if(v&&+v>=20){LS.maxLen=String(Math.round(+v));draw();msg('Giới hạn tên ghép: '+LS.maxLen+' ký tự')}}]]:[]).concat([['Bỏ chọn',()=>act('x')]]));
  if(a=='ins')return popItems('Chèn',(canSplitTbl(selRows(1)[0])?[['✂ Tách 2 bảng: chèn 1 dòng trống phía trên (giữ cụm ghép tên)',()=>act('sp')]]:[]).concat([['Chèn '+nr+' dòng trống phía trên',()=>act('ia')],['Chèn '+nr+' dòng trống phía dưới',()=>act('ib')]]).concat(has?[['Chèn '+(CR.rows?'hàng':'ô')+' đã '+(CR.cut?'cắt':'sao chép')+' lên trên',()=>act('pi')]]:[]));
  if(a=='xd')return popItems('Xóa',[['Xóa '+n+' dòng (các dòng sau dồn lên)',()=>act('dr')],['Chỉ xóa nội dung ô (giữ dòng)',()=>act('cl')]]);
  if(a=='cp'||a=='ct')return doCopy(a=='ct');
