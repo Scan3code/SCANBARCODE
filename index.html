@@ -9,7 +9,8 @@
    - Chạm vào ô trống mà không có gì để làm thì KHÔNG hiện hộp/menu nổi (showFM tự ẩn khi không có mục nào).
    - Bôi đen xong một dãy ô/dãy dòng (kéo tay cầm, chạm số dòng, tiêu đề cột) thì menu nổi tự mở ra.
 2. Dán kiểu Excel: copy 1 ô rồi chọn nhiều ô → dán lặp ra hết vùng chọn (tileM / pasteIn). Dán dãy ô bình thường vẫn dán từ ô đầu.
-3. Việc chạy lâu (tra web hàng loạt, ...) phải chạy NỀN và hiện tiến trình ĐAN NGAY TRONG BẢNG như Excel: trạng thái ở chính dòng đó (⏳ Đang tra… → ✍ Điền) và 1 chip ở dải thông tin trên cùng (wqChip). TUYỆT ĐỐI không dùng thanh/hộp nổi che lên dữ liệu, không dùng pop() che màn hình; người dùng vẫn thao tác tiếp được.
+3. Việc chạy lâu (tra web: 1 mã, hàng loạt, đối chiếu giá) phải chạy NỀN trong thanh tra #wqd nằm PHÍA DƯỚI (ngay trên thanh tab): là 1 phần của bố cục nên không che bảng, thu gọn / mở được, đang chạy vẫn thêm mã vào hàng đợi được, đổi tab vẫn chạy tiếp. Dòng lỗi vẫn hiện trạng thái ngay trong bảng (⏳ Đang tra… → ✍ Điền). Không dùng pop() che màn hình cho việc tra web.
+   - Web chỉ cho giá KM trực tiếp: điền từ web (kiểu nào cũng vậy) PHẢI XÓA cột Quà tặng / điều kiện, thể lệ KM (e.qt) của SKU đó.
 4. Mọi thay đổi dữ liệu đều snap() trước để Hoàn tác được.
 5. "Thêm sang…" (mvPop/mvDo/insertAt) là SAO CHÉP mã sang tab khác, KHÔNG xóa ở tab nguồn.
 6. Tên phiên đang mở luôn hiện ở chip đầu dải thông tin (sesChip): bấm vào tên chỉ để sửa tên ngay tại chip (Enter hoặc bấm ra ngoài là lưu, Esc là hủy) cho phiên đang mở (trên máy hoặc online; phiên online thì đổi tên xong lưu luôn lên sheet); mọi thao tác khác với phiên nằm ở nút Phiên; ＋ (không kèm chữ) để tạo phiên mới. Phiên (trên máy và online) đều lưu bằng sessData() và khôi phục bằng applySess(): bảng A3/A4/A6, dấu kiểm KM/KN/KD, tab nguồn Sheet3 (LS.src) và trạng thái kiểm bảng (quầy, A3/A4/A6/Tick, trang đang lật). Thêm gì cần lưu theo phiên thì sửa 2 hàm đó. Phiên trên máy tự lưu ngầm (autoLocal) sau mỗi thay đổi; phiên online chỉ lưu khi bấm lưu. Mở phiên online thì tách khỏi phiên trên máy để không ghi đè nhầm.
@@ -74,7 +75,20 @@ tr.sp td{padding:0;border:0;background:transparent}tr.r3 td{padding:4px 6px;vert
 #tabs button.fnd{flex:none;width:48px;padding:8px 0;display:flex;align-items:center;justify-content:center;color:var(--fg);background:var(--bg);border-color:var(--bd)}
 #tabs button i{position:absolute;top:-6px;right:5px;font-style:normal;background:#e5484d;color:#fff;border-radius:9px;padding:0 5px;font-size:10px;line-height:16px}
 #toast{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:112px;max-width:92vw;background:#222;color:#fff;padding:8px 12px;border-radius:10px;font-size:13px;z-index:20}
-.wqs small{color:var(--mut);font-weight:600}.wqp{color:var(--mut);font-weight:600}.twf{background:#b8860b!important}
+.wqs small{color:var(--mut);font-weight:600}.wqp{color:var(--mut);font-weight:600}
+#wqd{flex:none;border-top:1px solid var(--bd);background:var(--hd);font-size:13px}#wqd:empty,body.ed #wqd,body.fed #wqd{display:none}
+.wqt{display:flex;gap:6px;padding:6px;align-items:stretch}.wqt button{padding:8px 12px;font-size:13px;white-space:nowrap}
+.wqt .wqm{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:4px 10px;font-weight:700;overflow:hidden}.wqm small{display:flex;gap:8px;font-size:11.5px;color:var(--mut)}.wqm i{font-style:normal}.wqm i.f{color:#c2610a}.wqm i.b{color:#d93a30}.wqm i.o{color:#1d8a63}
+.wqpg{height:3px;background:var(--bd)}.wqpg i{display:block;height:100%;background:var(--ac);transition:width .3s}
+.wqfl{display:flex;gap:5px;padding:2px 6px 6px;overflow-x:auto}.wqfl button{flex:none;padding:5px 11px;font-size:12.5px;border-radius:99px}.wqfl button.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}.wqfl .re{margin-left:auto}
+.wqls{max-height:46dvh;overflow:auto;overscroll-behavior:contain;padding:0 6px 6px}body.wqo #eb{display:none!important}
+.wqi{--k:#8a948f;background:var(--bg);border:1px solid var(--bd);border-left:4px solid var(--k);border-radius:10px;margin-bottom:5px;padding:6px 8px}.wqi.k-fill{--k:#d9780b}.wqi.k-bad{--k:#d93a30}.wqi.k-ok{--k:#1d8a63}
+.wqh{display:flex;gap:8px;align-items:center;min-height:44px}.wqh>div{flex:1;min-width:0}.wqh button{flex:none;min-width:62px;padding:10px}
+.wq1{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}.wq1 b{font-size:14px}.wq1 small{color:var(--mut);font-size:11.5px;overflow:hidden;text-overflow:ellipsis}.wqst{font-size:11px;font-weight:700;color:var(--k);border:1px solid var(--k);border-radius:99px;padding:0 7px}
+.wqn{color:var(--mut);font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.wqp2{font-size:13px;margin-top:1px}.wqp2 s{color:var(--mut)}.wqp2 em{font-style:normal;font-size:10.5px;font-weight:700;border-radius:5px;padding:0 5px;background:#1d8a6322;color:#1d8a63;white-space:nowrap}.wqp2 em.n{background:var(--hd);color:var(--mut)}.wqp2 em.d{background:#d9780b22;color:#c2610a}.wqer{color:#d93a30;font-size:12.5px}
+.wqtick{color:var(--k);font-weight:800;font-size:18px;padding:0 8px}.wqdot,.wqsp{width:16px;height:16px;margin:0 8px;border-radius:50%;border:2px solid var(--bd)}.wqsp{border-top-color:var(--ac);animation:wqspin .8s linear infinite}@keyframes wqspin{to{transform:rotate(360deg)}}
+.wql{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-top:1px solid var(--bd)}.wql span{color:var(--mut);flex:none;max-width:45%}.wql b{text-align:right}.wqx{margin-top:5px}
+.wqb{display:flex;gap:6px;margin-top:6px}.wqb button{flex:1;padding:8px 4px}.twf{background:#b8860b!important}
 #fm{display:none;position:fixed;z-index:16;background:rgba(24,28,26,.42);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid #ffffff2e;border-radius:12px;padding:3px;gap:0;box-shadow:0 4px 18px #0006;max-width:calc(100vw - 12px);overflow-x:auto}
 #fm button{background:transparent;border:0;color:#fff;text-shadow:0 1px 3px #000c;font-weight:600;padding:0 15px;min-height:48px;font-size:14.5px;border-radius:8px;display:flex;align-items:center;white-space:nowrap}#fm button+button{border-left:1px solid #ffffff26;border-radius:0}#fm button:active{background:#ffffff33}
 tr.h3 td{background:var(--hz);font-weight:700}td.hz{overflow:visible;white-space:nowrap}td.hz div{position:sticky;left:44px;display:inline-block}
@@ -134,7 +148,7 @@ tr.r3 td:nth-child(-n+2){touch-action:none}
 tr.r3.k6 td:nth-child(2){box-shadow:inset 5px 0 0 #7b5ea7}tr.r3.k4 td:nth-child(2){box-shadow:inset 5px 0 0 #d9822b}tr.r3.k3 td:nth-child(2){box-shadow:inset 5px 0 0 #1f8a5b}
 .vds{font-size:13px;color:var(--mut);margin:0 0 8px;padding:8px 11px;background:var(--acs);border-radius:10px}.vds b{color:var(--ac)}#pop input.vdq{width:100%;box-sizing:border-box;margin-bottom:2px;padding:10px 12px;border-radius:11px}#pop .vdl{border:0;max-height:40vh;padding:0 1px}.vh{position:sticky;top:0;z-index:1;font-size:11.5px;font-weight:700;letter-spacing:.2px;color:var(--mut);padding:9px 4px 5px;background:var(--bg)}.vr{position:relative;display:flex;align-items:center;gap:11px;padding:10px 12px;margin:0 0 6px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);transition:background .15s,border-color .15s}.vr.on{background:var(--acs);border-color:var(--ac)}.vr input{position:absolute;opacity:0;pointer-events:none}.vk{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:14px;line-height:1;color:transparent;transition:all .15s}.vr input:checked+.vk{background:var(--ac);border-color:var(--ac);color:#fff}.vr input:checked+.vk::after{content:'✓'}.vt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.vt b{font-size:14.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.vt small{font-size:11.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.vr em{flex:none;font-style:normal;font-size:11.5px;font-weight:600;color:var(--ac);background:var(--acs);padding:3px 9px;border-radius:999px}.vr.on em{background:var(--bg)}.ch.kc{font-weight:700}.ch.kc.on{box-shadow:inset 0 0 0 2px currentColor}.ch.c0{background:var(--card,#fff);color:#555;border:1px dashed #999}.ch.c6{background:rgba(123,94,167,.28);color:#7b5ea7}.ch.c4{background:rgba(217,130,43,.30);color:#c06a10}.ch.c3{background:rgba(31,138,91,.26);color:#1f8a5b}
 .row3 .mA6{background:rgba(123,94,167,.28)}.row3 .mA4{background:rgba(217,130,43,.30)}.row3 .mA3{background:rgba(31,138,91,.26)}.row3 button.on{box-shadow:inset 0 0 0 3px currentColor;font-weight:800}.row3 small{font-weight:600;opacity:.85;margin-left:3px}#kz{flex:none!important;padding:8px 13px!important}body.kq:not(.kp) tr.r3 td:first-child,body.kq:not(.kp) #main tr:first-child th:first-child{padding:0!important;border:0!important;width:0;max-width:0;font-size:0;overflow:hidden}body.kq:not(.kp) tr.r3 td:first-child input,body.kq:not(.kp) #ta{display:none}body.kq:not(.kp) tr.r3 td{touch-action:auto!important}body.kq #info{flex-wrap:wrap;overflow:visible}.kb.n{background:#b25e00}.kb.d{background:#2e7d32}.nts{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.nts button{padding:7px 12px}.tchips small{font-weight:500;margin-left:3px;opacity:.85}.cc{flex:none;width:92px;min-height:132px;border:2px solid var(--bd);border-radius:12px;background:var(--bg);display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px}.cc .h{width:100%;text-align:center;font-size:20px;line-height:30px;color:var(--mut);background:var(--hd);border-radius:8px;touch-action:none;user-select:none}.cc .nm{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;font-size:13px;line-height:1.25}.cc .pn{width:100%;padding:7px 0;font-size:12px}.cc.fz{border-color:var(--ac);background:var(--acs)}.cc.fz .pn{background:var(--ac);color:#fff;border-color:var(--ac)}.cc.dg{opacity:.35}.cgh{position:fixed;z-index:80;padding:9px 14px;border-radius:10px;background:var(--ac);color:#fff;font-weight:700;font-size:13px;box-shadow:0 4px 14px #0005;pointer-events:none;white-space:nowrap}.cln{position:fixed;z-index:79;width:4px;border-radius:3px;background:var(--ac);pointer-events:none}.pgb{display:flex;gap:6px;align-items:stretch}.pgb button{padding:8px 16px;font-size:18px;font-weight:700}.pgb #pg{flex:1;font-size:12.5px;font-weight:600;line-height:1.25;padding:4px}.pgb #pg b{display:block;font-size:15px}body.kp #fb input.f:not(#f3q){display:none}.row3 #px{flex:none}.cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px 0}.cgrid .cc{width:auto;min-height:0;padding:4px;gap:3px}.cgrid .cc .h{line-height:24px;font-size:17px}.cgrid .cc .nm{font-size:12px;min-height:30px}.cgrid .cc .pn{padding:5px 0;font-size:11px}tr.r3.f3h td{background:#fff3c4!important;color:#1c1f1d!important}tr.r3.f3c td{background:#ffd9a8!important;color:#1c1f1d!important;box-shadow:inset 0 2px 0 #e5484d,inset 0 -2px 0 #e5484d}.clw{position:relative;flex:1;min-width:0;display:flex}.clw .f{flex:1;padding-right:36px}.sr .clr{display:none;position:absolute;right:3px;top:50%;transform:translateY(-50%);padding:4px 9px;border:0;background:transparent;font-size:16px;color:var(--mut);border-radius:50%}body.f3ed #fb>:not(#sb),body.f3ed #tabs,body.fed #tabs,body.fed #eb{display:none!important}</style></head><body>
-<div id="pv"></div><div id="info"></div><div id="tray"></div><div id="bar"></div><div id="main"></div><div id="fb"></div><div id="sg"></div><div id="eb"><span id="el"></span><div class="f" id="ei" role="textbox" contenteditable="plaintext-only" spellcheck="false" autocapitalize="off" autocorrect="off" enterkeyhint="next" data-ph="Chạm ô rồi nhập văn bản tại đây"></div><button id="ok">✓</button><button id="no">✕</button></div><div id="act"></div><div id="fm"></div><div id="ants"></div><div id="tabs"></div><div class="hd" id="h1"></div><div class="hd" id="h2"></div><div id="pop"></div><div id="toast"></div>
+<div id="pv"></div><div id="info"></div><div id="tray"></div><div id="bar"></div><div id="main"></div><div id="fb"></div><div id="sg"></div><div id="eb"><span id="el"></span><div class="f" id="ei" role="textbox" contenteditable="plaintext-only" spellcheck="false" autocapitalize="off" autocorrect="off" enterkeyhint="next" data-ph="Chạm ô rồi nhập văn bản tại đây"></div><button id="ok">✓</button><button id="no">✕</button></div><div id="act"></div><div id="fm"></div><div id="ants"></div><div id="wqd"></div><div id="tabs"></div><div class="hd" id="h1"></div><div class="hd" id="h2"></div><div id="pop"></div><div id="toast"></div>
 <script>
 const API='https://script.google.com/macros/s/AKfycbzMixo2qTm43242LjvrH6E_ypONCjbRL-qUdmNKznr3CJut25HXcQSvMhFce4T3NSYe/exec';
 const $=s=>document.querySelector(s),LS=new Proxy(localStorage,{set(t,k,v){try{t[k]=v}catch(e){}return true}});
@@ -689,7 +703,7 @@ function handles(){ants();const h1=$('#h1'),h2=$('#h2');if(!SL||S.tab=='Sheet3'|
 function revealCell(){if(!SL)return;const td=$('#main td[data-r="'+SL.r1+'"][data-c="'+SL.c1+'"]');if(!td)return;const m=M.getBoundingClientRect(),r=td.getBoundingClientRect(),top=m.top+36,bot=m.bottom-8;if(r.top<top)M.scrollTop-=top-r.top;else if(r.bottom>bot)M.scrollTop+=r.bottom-bot}
 if(window.visualViewport){const vv=visualViewport;vv.addEventListener('resize',()=>{document.body.style.height=vv.height+'px';window.scrollTo(0,0);if(ED)setTimeout(revealCell,60)});vv.addEventListener('scroll',()=>window.scrollTo(0,0))}
 function hideFM(){$('#fm').style.display='none'}
-const WQ={res:{},run:null};let XC={ok:null,t:''},XCT=0,FMK=0;
+const WQ={res:{},jobs:[],n:0,open:false,view:'',f:'all'};let XC={ok:null,t:''},XCT=0,FMK=0;
 const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);let TCH=0,TDN=0;['touchstart','touchend','touchcancel'].forEach(t=>document.addEventListener(t,e=>{TCH=Date.now();TDN=e.touches.length},true));
 function sysClip(cb){const fin=()=>{cb&&cb()};if(IOS||!(navigator.clipboard&&navigator.clipboard.readText)){XC.ok=false;return fin()}
  try{navigator.clipboard.readText().then(t=>{XC.ok=true;XC.t=t||'';fin()}).catch(()=>{XC.ok=false;fin()})}catch(e){XC.ok=false;fin()}}
@@ -737,65 +751,100 @@ let LPT=0,LPF=0;const lpOff=()=>{clearTimeout(LPT);LPT=0};
 M.addEventListener('touchstart',e=>{lpOff();if(!IOS||S.tab=='Sheet3'||e.touches.length!=1)return;const td=e.target.closest&&e.target.closest('td[data-r][data-c]');if(!td)return;LPT=setTimeout(()=>{LPT=0;LPF=Date.now();const r=+td.dataset.r,c=+td.dataset.c;if(!inSel(r,c))pick(r,c,r,c);showFM(multi?null:td)},500)},{passive:true});
 M.addEventListener('touchmove',lpOff,{passive:true});M.addEventListener('touchend',lpOff,{passive:true});M.addEventListener('touchcancel',lpOff,{passive:true});
 M.addEventListener('click',e=>{if(LPF&&Date.now()-LPF<800){e.stopPropagation();e.preventDefault();LPF=0}},true);
-M.addEventListener('scroll',()=>{winCheck();if(!pf)handles()});  const WEB_SCFP='https://script.google.com/macros/s/AKfycby2rFzxcV4vgnkJyqIc4y9fN0bSWbHxP155wiWZ4u62UC5HZfm509kB-IVLVA8X33Y/exec'; M.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.twb');if(!b)return;e.stopPropagation();e.preventDefault();if(b.classList.contains('twf')){wbFill(S.tab,[+b.dataset.r]);return}traWeb(b.dataset.w,b.dataset.r,S.tab)},true); async function traWeb(code,ri,sh){code=String(code||'').replace(/\D/g,'');  if(!code)return msg('Mã không hợp lệ');  if(!/^https:\/\/script\.google\.com\//.test(WEB_SCFP))return msg('Chưa điền link web SCFP vào hằng WEB_SCFP');  pop('🌐 Tra web: '+esc(code),'<div id="tw_b"><div style="height:8px;background:var(--hd);border:1px solid var(--bd);border-radius:99px;overflow:hidden;margin:10px 0 6px"><i id="tw_p" style="display:block;height:100%;width:0;background:var(--ac);transition:width .3s"></i></div><div class="mut" id="tw_t">Đang tra… 0%</div></div><div class="cvf"><button id="tw_r">Tra lại</button><button id="tw_x" class="pri">Đóng</button></div>',p=>{   p.querySelector('#tw_x').onclick=()=>p.style.display='none';   p.querySelector('#tw_r').onclick=()=>{p.style.display='none';traWeb(code,ri,sh)}});  let pr=0;const bar=()=>{const f=$('#tw_p'),t=$('#tw_t');if(!f||$('#pop').style.display!='block'){clearInterval(iv);return}pr+=(92-pr)*0.07;f.style.width=pr+'%';if(t)t.textContent='Đang tra… '+Math.round(pr)+'%'},iv=setInterval(bar,250);const out=h=>{clearInterval(iv);if($('#pop').style.display!='block')return;const b=$('#tw_b');if(b)b.innerHTML=h};  try{const r=await (await fetch(WEB_SCFP+'?live='+encodeURIComponent(code))).json();   if(!r||!r.success)return out('<b style="color:#b3261e">❌ '+esc((r&&r.message)||'Không tra được')+'</b>');   const money=v=>{const n=parseFloat(String(v||'').replace(/\D/g,''));return n>0?fm(n)+'đ':'—'},    ton=String(r.ton306||'').trim(),it=/báo\s*it|⚠/i.test(ton),    rows=[['SKU',r.sku||'(web không trả SKU)'],['Mã vạch',r.barcode||'—'],['Tên hàng',r.tenHang||'—'],['Giá bán',money(r.giaBan)],['Giá KM',money(r.giaKM)],['Thời gian KM',r.dateRange||'—'],     ['Tồn kho 306',it?'<span style="color:#b3261e">Báo IT (hết hàng hoặc chưa cập nhật tồn)</span>':esc(ton||'—')],['SL bán 306 (hôm trước)',esc(String(r.ban306||'—'))]];   out('<table style="width:100%;border-collapse:collapse;font-size:14px">'+rows.map(x=>'<tr><td style="padding:8px 4px;color:var(--mut);width:40%;border-bottom:1px solid var(--bd)">'+x[0]+'</td><td style="padding:8px 4px;font-weight:600;border-bottom:1px solid var(--bd)">'+(/^<span/.test(x[1])?x[1]:esc(x[1]))+'</td></tr>').join('')+'</table>'+(ri!=null&&ri!==''?'<button id="tw_f" class="pri" style="width:100%;margin-top:10px;padding:12px">✍ Điền thông tin vào dòng '+(+ri+1)+'</button>':''));const fb=$('#tw_f');if(fb)fb.onclick=()=>fillWeb(r,+ri,sh)}  catch(e){out('<b style="color:#b3261e">❌ Không tra được: '+esc(e)+'</b>')}}
-function fillWeb(r,ri,sh){const R=S[sh],row=R&&R[ri];if(!row)return msg('Không tìm thấy dòng để điền');
- snap();const km=wbApply(r,row);
- $('#pop').style.display='none';save();draw();msg('Đã điền '+row.sku+(km>0?' (có khuyến mãi)':' (không khuyến mãi, giá bán để trống)')+', hoàn tác được')}
+M.addEventListener('scroll',()=>{winCheck();if(!pf)handles()});  const WEB_SCFP='https://script.google.com/macros/s/AKfycby2rFzxcV4vgnkJyqIc4y9fN0bSWbHxP155wiWZ4u62UC5HZfm509kB-IVLVA8X33Y/exec'; M.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.twb');if(!b)return;e.stopPropagation();e.preventDefault();if(b.classList.contains('twf')){wbFill(S.tab,[+b.dataset.r]);return}traWeb(b.dataset.w,S.tab)},true); function traWeb(code,sh){code=String(code||'').replace(/\D/g,'');if(!code)return msg('Mã không hợp lệ');wqAdd([code],sh)}
 function wbApply(r,row){
  const num=v=>{const n=parseFloat(String(v||'').replace(/\D/g,''));return n>0?n:0},goc=num(r.giaBan),km=num(r.giaKM),gc=goc||km;
  row.e={id:-1,sku:row.sku,ten:String(r.tenHang||'').trim(),dvt:'',goc:gc,gia:km>0?km:'',qt:'',ad:km>0?String(r.dateRange||''):'',nh:'',v:'',r:[],fm:null,dp:null};
- row.err='';row.warn=0;row.tm=0;return km}
+ row.err='';row.warn=0;row.tm=0;delete row.ed;return km}
 
-function wqCell(sku,i){const k=skuKey({sku}),r=WQ.res[k],run=WQ.run;
+function wqCell(sku,i){const k=skuKey({sku}),r=WQ.res[k];
  if(r&&r.success){const g=parseFloat(String(r.giaKM||'').replace(/\D/g,''))||parseFloat(String(r.giaBan||'').replace(/\D/g,''))||0;return '<button type="button" class="twb twf" data-w="'+esc(sku)+'" data-r="'+i+'">✍ Điền</button> <small>'+esc(String(r.tenHang||'').slice(0,42))+(g?' · '+fm(g)+'đ':'')+'</small> '}
- if(run&&!run.fin&&run.pend&&run.pend[k])return '<span class="wqp">⏳ Đang tra…</span> ';
+ if(wqBusy(k))return '<span class="wqp">⏳ Đang tra…</span> ';
  return '<button type="button" class="twb" data-w="'+esc(sku)+'" data-r="'+i+'">🌐 Tra web</button> '+(r&&r.success===false?'<small>'+esc(r.message||'không tra được')+'</small> ':'')}
-function wqChip(){const r=WQ.run;if(!r||r.sh!=S.tab)return '';const bad=r.bad?' · lỗi '+r.bad:'';
- if(!r.fin)return '<span class="ch wn btn" data-i="wq:stop">🌐 Tra nền '+r.done+'/'+r.total+bad+' · ⏹ Dừng</span>';
- return (r.ok?'<span class="ch ok btn" data-i="wq:fill">✍ Điền '+r.ok+' mã đã tra</span>':'')+(r.failed&&r.failed.length?'<span class="ch wn btn" data-i="wq:retry">🔁 Tra lại '+r.failed.length+' mã lỗi</span>':'')+'<span class="ch btn" data-i="wq:x">'+(r.stop?'Đã dừng ':'Đã tra ')+r.done+'/'+r.total+bad+' ✕</span>'}
-function wqRefresh(){try{infoDraw()}catch(e){}document.querySelectorAll('#main .wqs').forEach(e=>{e.innerHTML=wqCell(e.dataset.s,+e.dataset.r)})}
-function wqAct(k){const r=WQ.run;if(k=='wq:stop'){if(r){r.stop=1;msg('Sẽ dừng sau các mã đang tra')}}else if(k=='wq:x'){WQ.run=null;wqRefresh()}else if(k=='wq:retry'&&r&&r.failed&&r.failed.length){const f=r.failed.slice(),sh=r.sh;WQ.run=null;wbRun(f,sh)}else if(k=='wq:fill'&&r){if(wbFill(r.sh,null)){WQ.run=null;wqRefresh()}}}
+const wqBusy=c=>WQ.jobs.some(j=>j.code==c&&(j.st=='wait'||j.st=='run'));
+function wqRefresh(){document.querySelectorAll('#main .wqs').forEach(e=>{e.innerHTML=wqCell(e.dataset.s,+e.dataset.r)});dockDraw()}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function wbGet(c){let r;for(let t=0;t<3;t++){
   try{const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),45000);try{r=await (await fetch(WEB_SCFP+'?live='+encodeURIComponent(c),{signal:ac.signal})).json()}finally{clearTimeout(tm)}}catch(e){r={success:false,message:'lỗi mạng / quá thời gian'}}
   if(r&&r.success)return r;if(t<2)await sleep(1500*(t+1))}
  return{success:false,message:(r&&r.message)||'không tra được'}}
-async function wbRun(only,shArg){if(WQ.run&&!WQ.run.fin)return msg('Đang tra nền, đợi xong rồi tra tiếp');
- if(!/^https:\/\/script\.google\.com\//.test(WEB_SCFP))return msg('Chưa điền link web SCFP vào hằng WEB_SCFP');
- const sh=shArg||S.tab,R=S[sh],codes=only||[...new Set(wbRows().map(i=>skuKey(R[i])).filter(c=>c&&!(WQ.res[c]&&WQ.res[c].success)))];
- if(!codes.length)return msg('Không có mã nào cần tra');
- const run=WQ.run={sh,total:codes.length,done:0,ok:0,bad:0,stop:0,fin:0,pend:{},failed:[]};codes.forEach(c=>run.pend[c]=1);wqRefresh();msg('Đang tra '+codes.length+' mã dưới nền, bạn cứ làm tiếp');
- let nx=0;const one=async w=>{await sleep(400*w);while(nx<codes.length&&!run.stop){const c=codes[nx++],r=await wbGet(c);
-   WQ.res[c]=r;run.done++;delete run.pend[c];if(r.success)run.ok++;else{run.bad++;run.failed.push(c)}if(WQ.run===run)wqRefresh();await sleep(250)}};
- await Promise.all([one(0),one(1)]);run.fin=1;run.pend={};if(WQ.run===run)wqRefresh();try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}}
+function wqAdd(codes,sh){if(!/^https:\/\/script\.google\.com\//.test(WEB_SCFP))return msg('Chưa điền link web SCFP vào hằng WEB_SCFP');
+ sh=sh||S.tab;if(!codes.length)return msg('Không có mã nào cần tra');let n=0;
+ codes.forEach(c=>{const o=WQ.jobs.find(j=>j.sh==sh&&j.code==c);if(o&&(o.st=='wait'||o.st=='run'))return;if(o)WQ.jobs.splice(WQ.jobs.indexOf(o),1);WQ.jobs.push({sh,code:c,st:'wait',r:null});n++});
+ if(!n){WQ.open=true;dockDraw();return msg('Mã này đang được tra')}
+ if(codes.length==1)WQ.view=sh+':'+codes[0];
+ WQ.f='all';wqRefresh();msg('Đang tra '+n+' mã ở thanh dưới, bạn cứ làm tiếp');wqPump()}
+function wqPump(){while(WQ.n<2&&WQ.jobs.some(j=>j.st=='wait'))wqWorker()}
+async function wqWorker(){WQ.n++;try{let j;while((j=WQ.jobs.find(x=>x.st=='wait'))){j.st='run';wqRefresh();const r=await wbGet(j.code);
+   if(!WQ.jobs.includes(j))continue;j.r=r;j.done=0;WQ.res[j.code]=r;j.st=r.success?'ok':'bad';wqRefresh();await sleep(250)}}
+ finally{WQ.n--;if(!WQ.n&&WQ.jobs.length){wqRefresh();try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}}}}
+function wbRun(){const R=S[S.tab];wqAdd([...new Set(wbRows().map(i=>skuKey(R[i])).filter(c=>c&&!(WQ.res[c]&&WQ.res[c].success)))],S.tab)}
 
 /* ===== Tra web đối chiếu: mã ĐÃ có ở Sheet3 -> so giá web với giá đang ở A3/A4/A6, lệch thì điền ===== */
 const numOf=v=>typeof v=='number'?v:(parseFloat(String(v==null?'':v).replace(/\D/g,''))||0);
 function wcRows(){const R=S[S.tab]||[],o=[];if(S.tab=='Sheet3'||!SL)return o;selRows(1).forEach(i=>{const r=R[i];if(r&&r.sku&&!r.err&&r.e&&skuKey(r).length>=4)o.push(i)});return o}
 function wcCmp(row,r){const e=row.e||{},sg=numOf(e.gia),sc=numOf(e.goc),wk=numOf(r.giaKM),wg=numOf(r.giaBan),wa=parseAd(r.dateRange),sa=parseAd(e.ad);
  return{sg,sc,wk,wg,km:sg!==wk,gc:wg>0&&sc>0&&sc!==wg,dt:!!(wk>0&&wa&&sa&&(wa[0]!==sa[0]||wa[1]!==sa[1]))}}
-function wcApply(row,r){const wk=numOf(r.giaKM),wg=numOf(r.giaBan),e=Object.assign({},row.e,{id:-1,gia:wk>0?wk:'',goc:wg||wk||row.e.goc,ad:wk>0?(()=>{const w=parseAd(r.dateRange);return w?fmtAd(w[0],w[1]):String(r.dateRange||row.e.ad||'')})():'',dp:null,fm:null});
- ['ws','we','mg','gv','src'].forEach(k=>delete e[k]);row.e=e;row.wl=1;row.warn=0;row.err=''}
-function wcFill(idx,sh){const R=S[sh]||[];let n=0;snap();idx.forEach(i=>{const row=R[i],r=row&&WQ.res[skuKey(row)];if(row&&r&&r.success){wcApply(row,r);n++}});save();draw();msg(n?'Đã điền '+n+' dòng từ web, hoàn tác được':'Không có dòng nào để điền')}
-async function wcRun(){const sh=S.tab,R=S[sh],idx=wcRows();if(!idx.length)return msg('Chọn dòng có mã đã có trong Sheet3 để tra đối chiếu');
- if(!/^https:\/\/script\.google\.com\//.test(WEB_SCFP))return msg('Chưa điền link web SCFP vào hằng WEB_SCFP');
- const codes=[...new Set(idx.map(i=>skuKey(R[i])))];let done=0,nx=0;
- pop('🌐 Tra web đối chiếu giá','<div id="wc_b"><div style="height:8px;background:var(--hd);border:1px solid var(--bd);border-radius:99px;overflow:hidden;margin:10px 0 6px"><i id="wc_p" style="display:block;height:100%;width:0;background:var(--ac);transition:width .3s"></i></div><div class="mut" id="wc_t">Đang tra 0/'+codes.length+'…</div></div>',p=>{});
- const live=()=>$('#pop').style.display=='block'&&$('#wc_b'),upd=()=>{if(!live())return;$('#wc_p').style.width=Math.round(done/codes.length*100)+'%';$('#wc_t').textContent='Đang tra '+done+'/'+codes.length+'…'};
- const one=async w=>{await sleep(400*w);while(nx<codes.length){const c=codes[nx++];WQ.res[c]=await wbGet(c);done++;upd();await sleep(200)}};
- await Promise.all([one(0),one(1)]);if(!live())return;
- const money=v=>v>0?fm(v):'—',line=(lb,a,b,bad)=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;font-size:13.5px"><span style="color:var(--mut)">'+lb+'</span><span>Sheet <b>'+a+'</b> · Web <b style="color:'+(bad?'#b3261e':'inherit')+'">'+b+'</b></span></div>';
- const bad=[];const cards=idx.map(i=>{const row=R[i],r=WQ.res[skuKey(row)],hd='<b>'+esc(row.sku)+'</b> <small style="color:var(--mut)">dòng '+(i+1)+' · '+esc(String(row.e&&row.e.ten||'').slice(0,34))+'</small>';
-  if(!r||!r.success)return'<div style="border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin:6px 0">'+hd+'<div style="color:#b3261e;font-size:13px;margin-top:3px">❌ '+esc((r&&r.message)||'Không tra được')+'</div></div>';
-  const c=wcCmp(row,r),b=c.km||c.gc;if(b)bad.push(i);
-  return'<div style="border:1px solid '+(b?'#b3261e':'var(--bd)')+';border-radius:10px;padding:8px 10px;margin:6px 0">'+hd+' <span style="font-size:12px;font-weight:700;color:'+(b?'#b3261e':'#1d8a63')+'">'+(b?'⚠ LỆCH':'✓ khớp')+'</span>'+
-   line('Giá KM',money(c.sg),money(c.wk),c.km)+line('Giá gốc',money(c.sc),money(c.wg),c.gc)+(r.dateRange?line('Thời hạn',esc(String(row.e&&row.e.ad||'—').replace(/Từ\s*/i,'').replace(/\s*đến\s*/i,'–')),esc(String(r.dateRange).replace(/Từ\s*/i,'').replace(/\s*đến\s*/i,'–')),c.dt):'')+
-   (b?'<button class="pri wcf" data-i="'+i+'" style="width:100%;margin-top:6px;padding:9px">✍ Điền thông tin web vào dòng '+(i+1)+'</button>':'')+'</div>'}).join('');
- $('#wc_b').innerHTML='<div class="mut" style="margin:6px 0">'+(bad.length?'<b style="color:#b3261e">'+bad.length+'/'+idx.length+' dòng lệch giá</b> so với web':'Tất cả '+idx.length+' dòng khớp giá web')+'</div><div style="max-height:52vh;overflow:auto">'+cards+'</div><div class="cvf">'+(bad.length?'<button class="pri" id="wc_all">✍ Điền '+bad.length+' dòng lệch</button>':'')+'<button id="wc_x">Đóng</button></div>';
- $('#wc_x').onclick=()=>$('#pop').style.display='none';const fa=$('#wc_all');if(fa)fa.onclick=()=>{$('#pop').style.display='none';wcFill(bad,sh)};
- document.querySelectorAll('#wc_b .wcf').forEach(b=>b.onclick=()=>{wcFill([+b.dataset.i],sh);b.disabled=true;b.textContent='✓ Đã điền'})}
-function wbFill(sh,idxs){const R=S[sh]||[],list=[];(idxs||R.map((_,i)=>i)).forEach(i=>{const row=R[i],r=row&&row.sku&&WQ.res[skuKey(row)];if(row&&row.err&&r&&r.success)list.push([row,r])});
- if(!list.length){msg('Không có dòng lỗi nào đã tra để điền');return 0}snap();list.forEach(([row,r])=>wbApply(r,row));save();draw();msg('Đã điền '+list.length+' dòng, hoàn tác được');return list.length}
+function wcApply(row,r){const wk=numOf(r.giaKM),wg=numOf(r.giaBan),e=Object.assign({},row.e,{id:-1,gia:wk>0?wk:'',goc:wg||wk||row.e.goc,qt:'',ad:wk>0?(()=>{const w=parseAd(r.dateRange);return w?fmtAd(w[0],w[1]):String(r.dateRange||'')})():'',dp:null,fm:null});
+ ['ws','we','mg','gv','src'].forEach(k=>delete e[k]);row.e=e;row.wl=1;row.warn=0;row.err='';
+ row.ed=Object.assign({},row.ed,{gia:1,goc:1,qt:1,ad:1})}
+function wcRun(){const R=S[S.tab],idx=wcRows();if(!idx.length)return msg('Chọn dòng có mã đã có trong Sheet3 để tra đối chiếu');
+ wqAdd([...new Set(idx.map(i=>skuKey(R[i])))],S.tab)}
+/* Dòng trong bảng được tìm lại theo SKU lúc điền, nên chèn / xóa / đổi chỗ dòng khi đang tra vẫn đúng */
+const wqRowsOf=j=>(S[j.sh]||[]).reduce((o,r,i)=>(r&&r.sku&&skuKey(r)==j.code&&o.push(i),o),[]);
+function wqNeed(row,r){if(row.err)return true;if(!row.e)return false;const c=wcCmp(row,r);return c.km||c.gc}
+const wqTodo=j=>j.st=='ok'?wqRowsOf(j).filter(i=>wqNeed(S[j.sh][i],j.r)):[];
+function wqApply(list){if(ED)commitEdit();if(!list.length){msg('Không có dòng nào cần điền');return 0}snap();
+ const got=new Set(list.map(x=>x[1]));WQ.jobs.forEach(j=>{if(got.has(j.r))j.done=1});
+ list.forEach(([row,r])=>row.err||!row.e?wbApply(r,row):wcApply(row,r));save();draw();msg('Đã điền '+list.length+' dòng, đã xóa điều kiện / thể lệ KM · hoàn tác được');return list.length}
+const wqPairs=js=>js.flatMap(j=>wqTodo(j).map(i=>[S[j.sh][i],j.r]));
+function wbFill(sh,idxs){const R=S[sh]||[],list=[];(idxs||R.map((_,i)=>i)).forEach(i=>{const row=R[i],r=row&&row.sku&&WQ.res[skuKey(row)];if(row&&row.err&&r&&r.success)list.push([row,r])});return wqApply(list)}
+
+/* ===== Thanh tra web chạy nền phía dưới ===== */
+/* Phân loại 1 mã: fill = cần điền (lệch giá / dòng lỗi), bad = lỗi tra, busy = đang / chờ tra, ok = khớp hoặc đã điền */
+function wqKind(j){if(j.st=='wait'||j.st=='run')return'busy';if(j.st=='bad'||j.st=='stop')return'bad';return wqTodo(j).length?'fill':'ok'}
+const wqMoney=v=>numOf(v)>0?fm(numOf(v))+'đ':'—';
+function wqCard(j){const key=j.sh+':'+j.code,R=S[j.sh]||[],rows=wqRowsOf(j),r=j.r,todo=wqTodo(j),op=WQ.view==key,kind=wqKind(j),row=rows.length?R[todo.length?todo[0]:rows[0]]:null,e=row&&!row.err&&row.e;
+ const name=String((r&&r.tenHang)||(e&&e.ten)||'').slice(0,70),wk=j.st=='ok'?numOf(r.giaKM):0,web=j.st=='ok'?wk||numOf(r.giaBan):0;
+ const st=j.st=='wait'?'Chờ':j.st=='run'?'Đang tra…':j.st=='stop'?'Đã dừng':j.st=='bad'?'Lỗi tra':!rows.length?'Không còn trong bảng':todo.length?(row.err?'Mã mới':'Lệch giá'):j.done?'Đã điền':'Khớp';
+ /* dòng giá: giá đang có → giá web */
+ let pr='';if(j.st=='bad')pr='<span class="wqer">'+esc((r&&r.message)||'Không tra được')+'</span>';
+ else if(j.st=='ok'){const cur=e?numOf(e.gia)||numOf(e.goc):0;
+  if(todo.length&&e){const c=wcCmp(row,r);pr=c.km?'<s>'+wqMoney(cur)+'</s> → <b>'+wqMoney(web)+'</b>':'Gốc <s>'+wqMoney(e.goc)+'</s> → <b>'+wqMoney(r.giaBan)+'</b>'}else pr='<b>'+wqMoney(web)+'</b>';
+  pr+=wk>0?' <em>KM</em>':' <em class="n">không KM</em>';if(todo.some(i=>R[i].e&&R[i].e.qt))pr+=' <em class="d">xóa điều kiện</em>'}
+ let h='<div class="wqi k-'+kind+(op?' op':'')+'" data-k="'+esc(key)+'"><div class="wqh" data-q="view"><div><div class="wq1"><b>'+esc(j.code)+'</b><span class="wqst">'+st+'</span><small>'+j.sh+(rows.length?' · dòng '+rows.map(i=>i+1).join(', '):'')+'</small></div>'+(name?'<div class="wqn">'+esc(name)+'</div>':'')+(pr?'<div class="wqp2">'+pr+'</div>':'')+'</div>'+
+  (todo.length?'<button class="pri" data-q="fill1">Điền</button>':kind=='bad'?'<button data-q="again">Tra lại</button>':kind=='busy'?'<span class="'+(j.st=='run'?'wqsp':'wqdot')+'"></span>':'<span class="wqtick">✓</span>')+'</div>';
+ if(!op)return h+'</div>';
+ let d='';if(j.st=='ok'){const ton=String(r.ton306||'').trim(),L=[['Giá bán web',wqMoney(r.giaBan)],['Giá KM web',wqMoney(r.giaKM)],['Thời gian KM',r.dateRange||'—'],['Tồn kho 306',/báo\s*it|⚠/i.test(ton)?'Báo IT (hết hàng hoặc chưa cập nhật tồn)':ton||'—'],['SL bán 306 (hôm trước)',r.ban306||'—'],['Mã vạch',r.barcode||'—']];
+  rows.forEach(i=>{const x=R[i];if(x.err||!x.e)return;L.push(['Dòng '+(i+1)+' đang có','KM '+wqMoney(x.e.gia)+' · gốc '+wqMoney(x.e.goc)+(x.e.ad?' · '+x.e.ad:'')]);if(x.e.qt)L.push(['Điều kiện dòng '+(i+1)+(todo.includes(i)?' (sẽ xóa)':''),x.e.qt])});
+  d=L.map(x=>'<div class="wql"><span>'+x[0]+'</span><b>'+esc(x[1])+'</b></div>').join('')}
+ return h+'<div class="wqx">'+d+'<div class="wqb">'+(rows.length?'<button data-q="go">Tới dòng</button>':'')+(kind=='busy'||kind=='bad'?'':'<button data-q="again">Tra lại</button>')+'<button data-q="del">Bỏ khỏi danh sách</button></div></div></div>'}
+const WQF=[['all','Tất cả'],['fill','Cần điền'],['bad','Lỗi'],['ok','Xong']],WQORD={fill:0,bad:1,busy:2,ok:3};
+function dockDraw(){const el=$('#wqd');if(!el)return;const J=WQ.jobs;document.body.classList.toggle('wqo',!!(J.length&&WQ.open));if(!J.length){el.innerHTML='';WQ.f='all';return}
+ const K=J.map(wqKind),C={all:J.length,fill:0,bad:0,busy:0,ok:0};K.forEach(k=>C[k]++);
+ const wait=C.busy,done=J.length-wait,n=wqPairs(J).length,old=el.querySelector('.wqls'),y=old?old.scrollTop:0;
+ if(WQ.f!='all'&&!C[WQ.f])WQ.f='all';
+ /* đang chạy: giữ nguyên thứ tự để không bấm nhầm; chạy xong: việc cần làm lên đầu */
+ let L=J.map((j,i)=>[j,K[i],i]);if(!wait)L.sort((a,b)=>WQORD[a[1]]-WQORD[b[1]]||a[2]-b[2]);if(WQ.f!='all')L=L.filter(x=>x[1]==WQ.f);
+ const sum=[C.fill?'<i class="f">'+C.fill+' cần điền</i>':'',C.bad?'<i class="b">'+C.bad+' lỗi</i>':'',C.ok?'<i class="o">'+C.ok+' xong</i>':''].join('')||'<i>đang chờ kết quả</i>';
+ el.innerHTML='<div class="wqt"><button class="wqm" data-q="open" aria-expanded="'+!!WQ.open+'"><span>'+(wait?'Đang tra '+done+'/'+J.length:'Đã tra '+J.length+' mã')+' '+(WQ.open?'▾':'▴')+'</span><small>'+sum+'</small></button>'+(n?'<button class="pri" data-q="fill">Điền '+n+' dòng</button>':'')+(wait?'<button data-q="stop">Dừng</button>':'<button data-q="x" aria-label="Đóng">✕</button>')+'</div>'+(wait?'<div class="wqpg"><i style="width:'+Math.round(done/J.length*100)+'%"></i></div>':'')+
+  (WQ.open?'<div class="wqfl">'+WQF.filter(f=>f[0]=='all'||C[f[0]]).map(f=>'<button class="'+(WQ.f==f[0]?'on':'')+'" data-q="f:'+f[0]+'">'+f[1]+' '+C[f[0]]+'</button>').join('')+(!wait&&C.bad>1?'<button class="re" data-q="retry">Tra lại '+C.bad+' mã lỗi</button>':'')+'</div><div class="wqls">'+L.map(x=>wqCard(x[0])).join('')+'</div>':'');
+ const ls=el.querySelector('.wqls');if(ls)ls.scrollTop=y}
+function wqAct(q,key){const J=WQ.jobs,j=J.find(x=>x.sh+':'+x.code==key);
+ if(q=='open')WQ.open=!WQ.open;
+ else if(q.indexOf('f:')==0){WQ.f=q.slice(2);const l=$('#wqd .wqls');if(l)l.scrollTop=0}
+ else if(q=='x'){WQ.jobs=[];WQ.view=''}
+ else if(q=='stop')J.forEach(x=>{if(x.st=='wait')x.st='stop'}),msg('Sẽ dừng sau các mã đang tra');
+ else if(q=='retry'){J.forEach(x=>{if(x.st=='bad'||x.st=='stop'){x.st='wait';x.r=null}});wqPump()}
+ else if(q=='fill')wqApply(wqPairs(J));
+ else if(!j)return;
+ else if(q=='view')WQ.view=WQ.view==key?'':key;
+ else if(q=='fill1')wqApply(wqPairs([j]));
+ else if(q=='del')J.splice(J.indexOf(j),1);
+ else if(q=='again'){j.st='wait';j.r=null;wqPump()}
+ else if(q=='go'){const i=wqRowsOf(j)[0];if(i===undefined)return;if(ED)closeEdit();if(S.tab!=j.sh){S.tab=j.sh;SL=null;draw()}WQ.open=false;dockDraw();return goRow(i)}
+ wqRefresh();handles()}
+$('#wqd').addEventListener('click',e=>{const b=e.target.closest('[data-q]');if(!b)return;const c=b.closest('.wqi');wqAct(b.dataset.q,c?c.dataset.k:'')});
 
 const afterPick=td=>{if(!SL)return hideFM();multi?showFM(null):showFM(td)};
 M.addEventListener('click',e=>{if(S.tab=='Sheet3'){const tr=e.target.closest('tr[data-k]');if(!tr)return;const k=+tr.dataset.k;if(KQ&&!KP&&e.target.closest('td:first-child,td:nth-child(2)'))return;if(KQ&&!KP&&KQ.t!='tick'){kqTap(k);return}chk.has(k)?chk.delete(k):chk.add(k);tr.classList.toggle('s',chk.has(k));tr.querySelector('input').checked=chk.has(k);barRefresh();return}const td=e.target.closest('td[data-r],th[data-c]');if(!td)return;
@@ -1269,12 +1318,12 @@ function stats(){const R=S[S.tab],P=PL,G=GL,o={wm:0,wa:0,v1:-1,n:0,runs:0,abs:0,
 function infoDraw(){const el=$('#info');if(!el)return;
  if(S.tab=='Sheet3'){const dr=LF.filter(e=>!e.h).length;el.innerHTML=sesChip()+'<span class="ch ok">'+dr+' / '+D.list.length+' mã'+(dr<D.list.length?' (đang lọc)':'')+'</span>'+kqChips()+Object.keys(CF).map(k=>'<span class="ch wn btn" data-i="cf:'+k+'">'+esc(H3[k][0])+': '+(CF[k].v?CF[k].v.size+' giá trị':'“'+esc(CF[k].t)+'”')+'</span>').join('')+((Object.keys(CF).length||q1||q2||q3)?'<span class="ch er btn" data-i="cfx">✕ Xóa lọc</span>':'');return}
  const t=stats(),a6=S.tab=='A6';
- el.innerHTML=sesChip()+wqChip()+'<span class="ch ok">'+t.n+' mã</span>'+(a6?'':'<span class="ch">'+t.runs+' cụm ghép</span>')+(t.mg?'<span class="ch ok btn" data-i="ab">ghép tên '+t.mg+' nhóm · '+(SHOWAB?'đang hiện ':'đã ẩn ')+t.abs+' dòng gộp · chạm để '+(SHOWAB?'ẩn':'hiện')+'</span>':'')+
+ el.innerHTML=sesChip()+'<span class="ch ok">'+t.n+' mã</span>'+(a6?'':'<span class="ch">'+t.runs+' cụm ghép</span>')+(t.mg?'<span class="ch ok btn" data-i="ab">ghép tên '+t.mg+' nhóm · '+(SHOWAB?'đang hiện ':'đã ẩn ')+t.abs+' dòng gộp · chạm để '+(SHOWAB?'ẩn':'hiện')+'</span>':'')+
   (t.wm?'<span class="ch ok btn" data-i="wv" style="background:rgba(37,99,235,.18)">ghép đợt '+t.wm+' mã · chạm để xem</span>':'')+(t.wa?'<span class="ch wn btn" data-i="wv">tự chọn đợt '+t.wa+' mã (đợt đứt quãng)</span>':'')+(t.big?'<span class="ch er btn" data-i="big">⚠ '+t.big+' cụm trên 10 mã</span>':'')+(t.err?'<span class="ch er btn" data-i="err">⚠ '+t.err+' mã không có trong file</span>':'')+(t.warn?'<span class="ch wn btn" data-i="warn">'+t.warn+' mã chờ chọn giá</span>':'')+
   (t.stale?'<span class="ch wn btn" data-i="sync">⟳ '+t.stale+' dòng khác Google Sheet · xem &amp; xác nhận</span>':'')+(t.mem?'<span class="ch">thành viên '+t.mem+' dòng</span>':'');
  el._st=t}
 $('#info').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;if(e.target.closest('input'))return;const k=b.dataset.i,t=$('#info')._st||{};
- if(k=='ses:new')return newLocal();if(k=='ses:ren')return sessRename(b);if(k.indexOf('wq:')==0)return wqAct(k);if(k.indexOf('cf:')==0)return colFilter(k.slice(3));if(k=='cfx')return clearF();if(k.indexOf('kq:')==0)return kqAct(k);if(k=='ab'){SHOWAB=!SHOWAB;LS.showab=SHOWAB?'1':'0';return draw()}if(k=='tab')return pickTab();if(k=='sync')return syncPrices();if(k=='err')return goRow(t.e1);if(k=='big')return goRow(t.b1);if(k=='warn')return goRow(t.w1);if(k=='wv')return goRow(t.v1)});
+ if(k=='ses:new')return newLocal();if(k=='ses:ren')return sessRename(b);if(k.indexOf('cf:')==0)return colFilter(k.slice(3));if(k=='cfx')return clearF();if(k.indexOf('kq:')==0)return kqAct(k);if(k=='ab'){SHOWAB=!SHOWAB;LS.showab=SHOWAB?'1':'0';return draw()}if(k=='tab')return pickTab();if(k=='sync')return syncPrices();if(k=='err')return goRow(t.e1);if(k=='big')return goRow(t.b1);if(k=='warn')return goRow(t.w1);if(k=='wv')return goRow(t.v1)});
 function zoomApply(){const t=$('#main table');if(t)t.style.zoom=Z[S.tab]||1}
 let UNP=(()=>{try{return JSON.parse(LS.unp||'{}')}catch(e){return{}}})();
 const TC={Sheet3:'#3b6ea8',A3:'#1d8a63',A4:'#d9780b',A6:'#8b5cc4'};
@@ -1310,7 +1359,7 @@ function findBar(){const fb=$('#fb'),F=FIND;
  fb.querySelectorAll('button').forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onpointerdown=e=>e.preventDefault()});
  [q,w].forEach(e=>{e.onfocus=()=>document.body.classList.add('ed','fed');e.onblur=()=>setTimeout(()=>{const a=document.activeElement;if(!a||!/^f[qw]$/.test(a.id))document.body.classList.remove('ed','fed')},150)});
  shq();shw();findRun()}
-function draw(){save();hideFM();bar();tabsDraw();
+function draw(){save();hideFM();bar();tabsDraw();dockDraw();
  if(S.tab=='Sheet3'){SL=null;if(ED)closeEdit();list()}else grid();paint();findRun();setTimeout(()=>{askPend();ask6Later()},60)}
 const dist=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);let pz=null;
 M.addEventListener('touchstart',e=>{if(e.touches.length==2)pz={d:dist(e),z:Z[S.tab]||1}},{passive:true});
@@ -1318,7 +1367,7 @@ M.addEventListener('touchmove',e=>{if(pz&&e.touches.length==2){e.preventDefault(
 M.addEventListener('touchend',e=>{if(pz&&e.touches.length<2){pz=null;LS.z=JSON.stringify(Z);if(KP&&S.tab=='Sheet3'){KP.keep=KP.start||0;list(1)}}});
 document.addEventListener('gesturestart',e=>e.preventDefault());
 draw();load();
-if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){const V='20261124h';let fresh=true;try{fresh=LS.appv===V;if(!fresh){LS.appv=V;fresh=LS.appv!==V}}catch(e){}
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){const V='20261127b';let fresh=true;try{fresh=LS.appv===V;if(!fresh){LS.appv=V;fresh=LS.appv!==V}}catch(e){}
  if(!fresh)navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>window.caches?caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))):0).catch(()=>{}).then(()=>location.reload());
  else navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{})}
 </script></body></html>
