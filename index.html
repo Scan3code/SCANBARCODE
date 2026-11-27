@@ -1196,14 +1196,12 @@ function grid(){const sh=S.tab,R=S[sh];{let l=-1;R.forEach((r,i)=>{if(r.sku)l=i}
    if(P.name){
     if(key=='sku')return esc(r.sku)+'<span class="mb">+'+ms.length+'</span>';
     if(key=='ten')return'<div class="mn">'+esc(txt)+' <span class="gc">ghép '+(ms.length+1)+' mã</span></div>'+[i].concat(ms).map(j=>'<div class="mo"><b>'+esc(R[j].sku)+'</b> '+esc(R[j].e&&R[j].e.ten?String(R[j].e.ten):'')+'</div>').join('')}
-   if(key=='ad'){const w=waveInfo(r);if(w){let h=esc(txt);if(w.m)h+='<span class="mb mw">ghép '+w.m.mg+' đợt</span>'+(w.m.src||[]).map(s=>'<div class="mo mw"><b>'+esc(s.ad)+'</b>'+(s.dot?' · '+esc(s.dot.slice(0,40)):'')+' · gốc '+esc(fm(s.goc))+'</div>').join('');
+   if(key=='ad'){const w=waveInfo(r);if(w){let h=esc(txt);if(w.m)h+='<span class="mb mw">ghép '+w.m.mg+' đợt</span>'+(w.m.src||[]).map(s=>'<div class="mo mw"><b>'+esc(s.ad)+'</b>'+' · gốc '+esc(fm(s.goc))+'</div>').join('');
      if(w.n>1)h+='<span class="mb mc">đợt '+(w.i+1)+'/'+w.n+(r.wl?' · chọn tay':' · tự chọn')+'</span>';return h}}
     return(key=='ten'&&r.err&&r.sku?'<span class="wqs" data-s="'+esc(r.sku)+'" data-r="'+i+'">'+wqCell(r.sku,i)+'</span>':'')+(k[3]||key=='ten'?esc(txt):cdiv(txt))};
      const cellHtml0=cellHtml,sh2=s=>String(s||'').replace(/Từ\s*/i,'').replace(/\s*đến\s*/i,'–');
    const cellHtmlW=(r,i,k)=>{let h=cellHtml0(r,i,k);if(!r.sku)return h;const w=waveInfo(r);if(!w)return h;
-    if(k[0]=='sku')h+=w.m?'<span class="mb mw">'+w.m.mg+' đợt</span>':'<span class="mb mc">đợt '+(w.i+1)+'/'+w.n+'</span>';
-    if(k[0]=='ten'){if(w.m)h+='<div class="mo mw"><b>ghép '+w.m.mg+' đợt</b>: '+(w.m.src||[]).map(s=>esc(sh2(s.ad))).join(' + ')+' → <b>'+esc(sh2(w.m.ad))+'</b></div>';
-     if(w.n>1)h+='<div class="mo mc"><b>đợt '+(w.i+1)+'/'+w.n+(r.wl?' · chọn tay':' · tự chọn')+'</b>: '+(w.m?'':esc(sh2(r.e.ad)))+'</div>'}
+    if(k[0]=='ten')h+=' <span class="gc" style="background:'+(w.m?'#2563eb':'#d97706')+';color:#fff">'+(w.m?'ghép '+w.m.mg+' đợt':'đợt '+(w.i+1)+'/'+w.n)+'</span>';
     return h};
 const cols=[{w:40,fz:1}].concat(K.map((k,x)=>({w:(CWS[sh]&&CWS[sh][k[0]])||colW(k,x,R.map((r,i)=>tx(r,i,k[0])),!R.some(r=>r.sku)),fz:x==0}))),L=lay(cols);
  const sx=M.scrollLeft,sy=M.scrollTop;M.className='g';M.style.fontFamily='';
