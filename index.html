@@ -188,11 +188,11 @@ function waveScore(ch,fx,T){const all=ch.concat(fx);let s=-1/0,e=1/0,ex=0,me=1/0
  const ok=s<=e?1:0,len=ok?Math.round((Math.min(e,T+1e3*WD)-Math.max(s,T-1e3*WD))/WD)+1:-Math.round((s-e)/WD);
  return[-ex,ok,ok&&s<=T&&T<=e?1:0,len,Math.min(me,T+1e3*WD)/WD,Math.max(0,...Object.values(fq)),sum/WD]}
 function bestWaves(CS,fx,T){let n=1;CS.forEach(c=>n*=c.length);let best=null,bs=null;const test=ch=>{const s=waveScore(ch,fx,T);if(!bs||cmpS(s,bs)>0){bs=s;best=ch.slice()}};
- if(n<=20000){const ch=[];(function rec(i){if(i==CS.length)return test(ch);for(const c of CS[i]){ch[i]=c;rec(i+1)}})(0)}
+ if(n<=3000){const ch=[];(function rec(i){if(i==CS.length)return test(ch);for(const c of CS[i]){ch[i]=c;rec(i+1)}})(0)}
  else{const ch=CS.map(c=>c.reduce((a,b)=>b.we>a.we?b:a));for(let p=0;p<3;p++)CS.forEach((c,i)=>{let bi=ch[i],b0=null;c.forEach(x=>{const t=ch.slice();t[i]=x;const s=waveScore(t,fx,T);if(!b0||cmpS(s,b0)>0){b0=s;bi=x}});ch[i]=bi});test(ch)}
  return best}
 /* mỗi cụm ghép (các dòng liền nhau, không có dòng trống) phải chạy cùng đợt */
-function resolveWaves(R){if(typeof D=='undefined'||!D||!D.idx)return;const T=TODAY();let i=0,chg=0;
+function resolveWaves0(R){if(typeof D=='undefined'||!D||!D.idx)return;const T=TODAY();let i=0,chg=0;
  while(i<R.length){if(!R[i].sku){i++;continue}let j=i;while(j<R.length&&R[j].sku)j++;const fl=[],fx=[];
   for(let k=i;k<j;k++){const r=R[k],C=waveCands(r);if(C)fl.push({k,C});else if(r.e&&r.e.ws!=null)fx.push(r.e)}
   if(fl.length){const b=bestWaves(fl.map(f=>f.C),fx,T);
@@ -202,8 +202,11 @@ function resolveWaves(R){if(typeof D=='undefined'||!D||!D.idx)return;const T=TOD
     if(r.e.id!==c.id||r.e.ad!==c.ad||String(r.e.goc)!==String(c.goc)){r.e=c;chg++}})}
   i=j}
  if(chg)setTimeout(()=>msg('Đã tự chọn/gộp đợt KM cho '+chg+' mã, cùng cụm chạy chung ngày. Chạm giữ dòng > Thêm để đổi đợt'),0)}
-function waveInfo(r){const e=r&&r.e;if(!e||!r.sku)return null;let C=[];if(typeof D!='undefined'&&D&&D.idx)C=(D.idx[r.sku]||[]).filter(x=>wkey(x)==wkey(e)&&x.ws!=null);
+function waveInfo(r){try{return waveInfo0(r)}catch(e){return null}}
+function waveInfo0(r){const e=r&&r.e;if(!e||!r.sku)return null;let C=[];if(typeof D!='undefined'&&D&&D.idx)C=(D.idx[r.sku]||[]).filter(x=>wkey(x)==wkey(e)&&x.ws!=null);
  if(!e.mg&&C.length<2)return null;return{m:e.mg?e:null,i:Math.max(0,C.findIndex(x=>x.ad===e.ad)),n:C.length}}
+const rwKey=R=>R.length+'|'+TODAY()+'|'+(typeof D!='undefined'&&D&&D.list?D.list.length:0)+'|'+R.map(r=>r&&r.sku?(r.sku+':'+(r.e?r.e.id+'/'+r.e.ad+'/'+r.e.goc+'/'+r.e.gia:'')+(r.wl?'L':'')+(r.ed&&Object.keys(r.ed).length?'E':'')):'').join(',');
+function resolveWaves(R){try{if(!R)return;const k=rwKey(R);if(R.__rwk===k)return;resolveWaves0(R);R.__rwk=rwKey(R)}catch(e){try{LS.lasterr=new Date().toLocaleString('vi-VN')+' · resolveWaves: '+(e&&e.message)}catch(z){}}}
 function waveItems(i){const sh=S.tab,R=S[sh],r=R&&R[i];if(!r||!r.sku||!r.e||typeof D=='undefined'||!D||!D.idx)return[];const k=wkey(r.e),C=(D.idx[r.sku]||[]).filter(x=>wkey(x)==k&&x.ws!=null);if(C.length<2&&!r.wl)return[];
  return[['Chọn đợt KM khác cho mã này ('+C.length+' đợt)',()=>popItems('Đợt KM của '+r.sku,C.map(x=>[x.ad+(x.mg?' (đã gộp '+x.mg+' đợt)':'')+' · gốc '+fm(x.goc),()=>{snap();r.e=x;r.wl=1;save();draw()}]).concat([['Để app tự chọn theo cụm',()=>{snap();delete r.wl;save();draw()}]]))]]}
 
@@ -689,7 +692,7 @@ function hideFM(){$('#fm').style.display='none'}
 const WQ={res:{},run:null};let XC={ok:null,t:''},XCT=0,FMK=0;
 const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);let TCH=0,TDN=0;['touchstart','touchend','touchcancel'].forEach(t=>document.addEventListener(t,e=>{TCH=Date.now();TDN=e.touches.length},true));
 function sysClip(cb){const fin=()=>{cb&&cb()};if(IOS||!(navigator.clipboard&&navigator.clipboard.readText)){XC.ok=false;return fin()}
- navigator.clipboard.readText().then(t=>{XC.ok=true;XC.t=t||'';fin()}).catch(()=>{XC.ok=false;fin()})}
+ try{navigator.clipboard.readText().then(t=>{XC.ok=true;XC.t=t||'';fin()}).catch(()=>{XC.ok=false;fin()})}catch(e){XC.ok=false;fin()}}
 function selHas(){if(!SL||S.tab=='Sheet3')return false;const R=S[S.tab];for(const i of selRows(1)){const r=R[i];if(!r)continue;for(let k=0;k<=LASTC;k++){if(!inSel(i,k))continue;const v=k==0?r.sku:(VV[i]&&VV[i][FK[k]]);if(String(v==null?'':v).trim()!=='')return true}}return false}
 const rangeSel=()=>!!SL&&(XS.length>0||SL.r2>SL.r1||SL.c2>SL.c1);
 const skuKey=r=>String(r&&r.sku||'').replace(/\D/g,'');
@@ -712,22 +715,22 @@ function showFM(el,again){const f=$('#fm');if(!SL||S.tab=='Sheet3')return hideFM
   sysClip(()=>{if(tk===FMK&&SL&&k0!==XC.ok+'|'+XC.t)showFM(el,1)})}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&XC.ok===true)sysClip()});window.addEventListener('focus',()=>{if(XC.ok===true)sysClip()});
 ['touchstart','mousedown'].forEach(ev0=>document.addEventListener(ev0,e=>{const f=$('#fm');if(f.style.display=='flex'&&!f.contains(e.target)&&!e.target.classList.contains('hd'))hideFM()},true));
-['h1','h2'].forEach(id=>{const h=$('#'+id);h.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});h.addEventListener('pointerdown',e=>{if(e.pointerType=='mouse'&&e.button!==0)return;e.preventDefault();hideFM();if(!SL)return;const pid=e.pointerId;
+['h1','h2'].forEach(id=>{const h=$('#'+id);const begin=(e,T)=>{e.preventDefault();hideFM();if(!SL)return;const pid=T?0:e.pointerId,P0=T?e.touches[0]:e,tStart=Date.now();
  const top=id=='h1',fr=SL.c1==0&&SL.c2==LASTC,fc=SL.r1==0&&SL.r2==S[S.tab].length-1&&SL.c1==SL.c2,anc={r:top?SL.r1:SL.r2,c:top?SL.c1:SL.c2},m0=M.getBoundingClientRect(),hh=hdrH();
  const ct=$('#main td[data-r="'+anc.r+'"][data-c="'+anc.c+'"]'),q=ct?ct.getBoundingClientRect():null,qx=q?(top?q.left:q.right):0,qy=q?(top?q.top:(ct.rowSpan>1&&ct.parentNode?ct.parentNode.getBoundingClientRect().bottom:q.bottom)):0;
  const pT=!!q&&qy<m0.top+hh,pB=!!q&&qy>m0.bottom,pL=!!q&&qx<m0.left,pR=!!q&&qx>m0.right;
- let fx=e.clientX,fy=e.clientY,moved=0,drag=true;const x0=fx,y0=fy;$('#h1').style.pointerEvents=$('#h2').style.pointerEvents='none';
+ let fx=P0.clientX,fy=P0.clientY,moved=0,drag=true;const x0=fx,y0=fy;$('#h1').style.pointerEvents=$('#h2').style.pointerEvents='none';
  const apply=()=>{if(!SL)return;const m=M.getBoundingClientRect(),px=Math.min(Math.max(fx+(top?6:-6),m.left+3),m.right-3),py=Math.min(Math.max(fy+(top?6:-6),m.top+hh+3),m.bottom-3),el=document.elementFromPoint(px,py),td=el&&el.closest('#main td[data-r]');if(!td)return;
   let nr=+td.dataset.r,nc=td.dataset.c===undefined?(top?SL.c1:SL.c2):+td.dataset.c;const zT=m.top+hh+60,zB=m.bottom-60,zL=m.left+200,zR=m.right-60;
   if(pT&&fy<zT)nr=Math.min(anc.r,nr);if(pB&&fy>zB)nr=Math.max(anc.r,nr);if(pL&&fx<zL)nc=Math.min(anc.c,nc);if(pR&&fx>zR)nc=Math.max(anc.c,nc);
   if(top){if(!fc)SL.r1=Math.min(nr,SL.r2);if(!fr)SL.c1=Math.min(nc,SL.c2)}else{if(!fc)SL.r2=Math.max(nr,SL.r1);if(!fr)SL.c2=Math.max(nc,SL.c1)}paint()};
- const tick=()=>{if(!drag)return;if(moved){const m=M.getBoundingClientRect();let dy=0,dx=0;
+ const tick=()=>{if(!drag)return;if(!SL||Date.now()-tStart>60000){en();return}if(moved){const m=M.getBoundingClientRect();let dy=0,dx=0;
    if(fy<m.top+hh+60)dy=-Math.ceil((m.top+hh+60-fy)/4);else if(fy>m.bottom-60)dy=Math.ceil((fy-(m.bottom-60))/4);
    if(fx<m.left+200&&M.scrollLeft>0)dx=-Math.ceil((m.left+200-fx)/6);else if(fx>m.right-60)dx=Math.ceil((fx-(m.right-60))/4);
    dy=Math.max(-18,Math.min(18,dy));dx=Math.max(-26,Math.min(26,dx));if(dy)M.scrollTop+=dy;if(dx)M.scrollLeft+=dx;apply()}requestAnimationFrame(tick)};
- const mv=ev=>{if(ev.pointerId!==pid)return;ev.preventDefault();fx=ev.clientX;fy=ev.clientY;if(Math.abs(fx-x0)+Math.abs(fy-y0)>8)moved=1;if(moved)apply()};
- const en=ev=>{if(ev&&ev.pointerId!==undefined&&ev.pointerId!==pid)return;drag=false;document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',en);document.removeEventListener('pointercancel',en);if(moved){const sw=x=>{x.stopPropagation();x.preventDefault()};window.addEventListener('click',sw,true);setTimeout(()=>window.removeEventListener('click',sw,true),80)};$('#h1').style.pointerEvents=$('#h2').style.pointerEvents='';handles();if(!moved||rangeSel())showFM(h)};
- document.addEventListener('pointermove',mv,{passive:false});document.addEventListener('pointerup',en);document.addEventListener('pointercancel',en);requestAnimationFrame(tick)})});
+ const mv=ev=>{if(!T&&ev.pointerId!==pid)return;ev.preventDefault();const q=T?ev.touches[0]:ev;if(!q)return;fx=q.clientX;fy=q.clientY;if(Math.abs(fx-x0)+Math.abs(fy-y0)>8)moved=1;if(moved)apply()};
+ const en=ev=>{if(!T&&ev&&ev.pointerId!==undefined&&ev.pointerId!==pid)return;if(!drag)return;drag=false;const E1=T?['touchmove','touchend','touchcancel']:['pointermove','pointerup','pointercancel'];document.removeEventListener(E1[0],mv);document.removeEventListener(E1[1],en);document.removeEventListener(E1[2],en);window.removeEventListener('blur',en);if(moved&&!T){const sw=x=>{x.stopPropagation();x.preventDefault()};window.addEventListener('click',sw,true);setTimeout(()=>window.removeEventListener('click',sw,true),80)};$('#h1').style.pointerEvents=$('#h2').style.pointerEvents='';handles();if(!moved||rangeSel())showFM(h)};
+ const E2=T?['touchmove','touchend','touchcancel']:['pointermove','pointerup','pointercancel'];document.addEventListener(E2[0],mv,{passive:false});document.addEventListener(E2[1],en);document.addEventListener(E2[2],en);window.addEventListener('blur',en);requestAnimationFrame(tick)};h.addEventListener('touchstart',e=>begin(e,true),{passive:false});h.addEventListener('pointerdown',e=>{if(e.pointerType=='touch'||(e.pointerType=='mouse'&&e.button!==0))return;begin(e,false)})});
 M.addEventListener('contextmenu',e=>{if(S.tab=='Sheet3')return;const td=e.target.closest('td[data-r][data-c]');if(!td)return;e.preventDefault();const r=+td.dataset.r,c=+td.dataset.c;
  if(!inSel(r,c))pick(r,c,r,c);showFM(multi?null:td)});
 let LPT=0,LPF=0;const lpOff=()=>{clearTimeout(LPT);LPT=0};
@@ -834,7 +837,7 @@ function act(a){if(!SL)return;const sh=S.tab,R=S[sh],rows=selRows(),n=rows.lengt
  if(a=='wb')return wbRun();
  if(a=='wf')return void wbFill(sh,wbRows());
  if(a=='um'){const it=mergeItems(SL.r1).filter(x=>/^(Gỡ|Tách)/.test(x[0]));if(!it.length)return;return it.length==1?it[0][1]():popItems('Tách tên ghép',it)}
- if(a=='more')return popItems('Thêm',[['Sửa ô đầu',()=>openEdit(SL.r1,SL.c1)]].concat(SL.r2>SL.r1?[['Điền xuống từ dòng đầu',()=>act('fd')]]:[]).concat(mergeItems(SL.r1)).concat(waveItems(SL.r1)).concat(wcRows().length?[['🌐 Tra web đối chiếu giá ('+wcRows().length+' mã)',()=>wcRun()]]:[]).concat([['Đặt lại độ rộng các cột (hoặc chạm đúp vạch kéo ở tiêu đề cột)',()=>{delete CWS[S.tab];LS.cws=JSON.stringify(CWS);draw()}]]).concat(PL&&PL.some(p=>p&&p.name)?[['Giới hạn ký tự của 1 tên ghép: '+MAXL()+' (bấm để đổi)',()=>{const v=prompt('Giới hạn số ký tự cho 1 tên ghép (từ 20 trở lên):',MAXL());if(v&&+v>=20){LS.maxLen=String(Math.round(+v));draw();msg('Giới hạn tên ghép: '+LS.maxLen+' ký tự')}}]]:[]).concat([['Bỏ chọn',()=>act('x')]]));
+ if(a=='more')return popItems('Thêm',[['Sửa ô đầu',()=>openEdit(SL.r1,SL.c1)]].concat(SL.r2>SL.r1?[['Điền xuống từ dòng đầu',()=>act('fd')]]:[]).concat(mergeItems(SL.r1)).concat(waveItems(SL.r1)).concat(wcRows().length?[['🌐 Tra web đối chiếu giá ('+wcRows().length+' mã)',()=>wcRun()]]:[]).concat([['Đặt lại độ rộng các cột (hoặc chạm đúp vạch kéo ở tiêu đề cột)',()=>{delete CWS[S.tab];LS.cws=JSON.stringify(CWS);draw()}]]).concat(PL&&PL.some(p=>p&&p.name)?[['Giới hạn ký tự của 1 tên ghép: '+MAXL()+' (bấm để đổi)',()=>{const v=prompt('Giới hạn số ký tự cho 1 tên ghép (từ 20 trở lên):',MAXL());if(v&&+v>=20){LS.maxLen=String(Math.round(+v));draw();msg('Giới hạn tên ghép: '+LS.maxLen+' ký tự')}}]]:[]).concat(LS.lasterr?[['Xem lỗi gần nhất (để gửi cho người sửa)',()=>alert(LS.lasterr)]]:[]).concat([['Bỏ chọn',()=>act('x')]]));
  if(a=='ins')return popItems('Chèn',(canSplitTbl(selRows(1)[0])?[['✂ Tách 2 bảng: chèn 1 dòng trống phía trên (giữ cụm ghép tên)',()=>act('sp')]]:[]).concat([['Chèn '+nr+' dòng trống phía trên',()=>act('ia')],['Chèn '+nr+' dòng trống phía dưới',()=>act('ib')]]).concat(has?[['Chèn '+(CR.rows?'hàng':'ô')+' đã '+(CR.cut?'cắt':'sao chép')+' lên trên',()=>act('pi')]]:[]));
  if(a=='xd')return popItems('Xóa',[['Xóa '+n+' dòng (các dòng sau dồn lên)',()=>act('dr')],['Chỉ xóa nội dung ô (giữ dòng)',()=>act('cl')]]);
  if(a=='cp'||a=='ct')return doCopy(a=='ct');
